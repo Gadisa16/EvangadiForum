@@ -1,0 +1,36 @@
+const dbConnection = require('../db/dbConfig')
+const { StatusCodes } = require('http-status-codes');
+async function postQuestion(req,res){
+    const {questionid,userid,title,description,tag}=req.body;
+    if(!questionid || !userid || !title || !description || !tag){
+        return res.status(StatusCodes.BAD_REQUEST).json({msg:"please provide all required fields"})
+    }
+
+    try {
+        await dbConnection.query("INSERT INTO questions (questionid,userid,title,description,tag) VALUES (?,?,?,?,?)",[questionid,userid,title,description,tag])
+        return res.status(StatusCodes.CREATED).json({msg:"question posted redirected to home"})
+        
+    } catch (error) {
+        console.log(error.message)
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({msg:"something went wrong, try again later"})
+    }
+}
+
+async function allQuestion(req,res){
+    try {
+        const [allquestion] = await dbConnection.query(`
+        SELECT q.questionid, q.userid, q.title, q.description, u.username
+        FROM questions q
+        JOIN users u ON q.userid = u.userid
+        ORDER BY q.id DESC
+    `);
+
+    return res.status(StatusCodes.OK).json({msg:"all question retrieved succesfully",allquestion})
+    
+    } catch (error) {
+        console.log(error.message)
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({msg:"something went wrong, try again later"})
+    }
+}
+
+module.exports = {postQuestion,allQuestion};
