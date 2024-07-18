@@ -1,6 +1,9 @@
-require("dotenv").config()
 const express = require('express');
 const app = express();
+
+const cors = require('cors')
+require("dotenv").config()
+app.use(cors())
 
 //db connection
 const dbConnection = require('./db/dbConfig');
@@ -24,8 +27,8 @@ app.use("/api/answers", authMiddleware, answerRoute)
 const port = 3333;
 async function start(){
     try {
-        const result=await dbConnection.execute("select 'test'")
-        app.listen(port)
+        const result = await dbConnection.execute("select 'test'")
+        await app.listen(port)
         console.log("database connection established")
         console.log(`listening on ${port}`)
     } catch (error) {

@@ -1,40 +1,48 @@
-const dbConnection = require('../db/dbConfig')
-const { StatusCodes } = require('http-status-codes');
+const dbconnection = require("../db/dbconfig.js");
+const { StatusCodes } = require("http-status-codes");
 
-async function postAnswer(req,res){
-    const {userid,questionid,answer}=req.body;
-    if(!questionid || !userid || !answer){
-        return res.status(StatusCodes.BAD_REQUEST).json({msg:"please provide all required fields"})
+async function postAnswer(req, res) {
+    const { answer, questionid, userid } = req.body;
+
+    if (!answer || !questionid || !userid) {
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ msg: "Please provide all required value. " });
     }
-    //insert data into answers table
+
     try {
-        await dbConnection.query("INSERT INTO answers (userid,questionid,answer) VALUES (?,?,?)",[userid,questionid,answer])
-        return res.status(StatusCodes.CREATED).json({msg:"answer posted"})
-        
+        await dbconnection.query(
+        "INSERT INTO answers(userid,questionid,answer) VALUES(?,?,?)",
+        [userid, questionid, answer]
+        );
+        return res
+        .status(StatusCodes.CREATED)
+        .json({ msg: "Answer posted successfully" });
     } catch (error) {
-        console.log(error.message)
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({msg:"something went wrong, try again later"})
+        console.log("answer posted error is", error);
+        return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ msg: "Something went wrong try again later" });
+    }
+}
+async function getAnswer(req, res) {
+  // const { questionid } = req.body;
+    const questionId = req.params.questionId;
+    if (!questionId) {
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ msg: "Please enter questionid " });
     }
 
-}
-async function allAnswer(req,res){
-    // const questionid = req.query.questionid;
-    
-    const questionId = req.headers['questionid'];
-    // console.log(questionId)
-        try {
-            const [allanswer] = await dbConnection.query(`SELECT users.username, answers.answer
-            FROM answers
-            JOIN users ON answers.userid = users.userid
-            WHERE answers.questionid = ?
-            `,[questionId])
-                return res.status(StatusCodes.OK).json({msg:"all answer retrieved succesfully",allanswer})
-        
-        } catch (error) {
-            console.log(error.message)
-            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({msg:"something went wrong, try again later"})
-        }
-    
+    try {
+        const response = await dbconnection.query(
+            "SELECT answers.answer, users.username FROM answers  INNER JOIN users ON answers.userid = users.userid WHERE answers.questionid = ? ORDER BY answers.answerid DESC",
+            [questionId]
+        );
+        return res.status(StatusCodes.OK).json({ data: response[0] });
+    } catch (error) {
+        console.log("from get answer", error);
+    }
 }
 
-module.exports = {postAnswer,allAnswer};
+module.exports = { postAnswer, getAnswer };
