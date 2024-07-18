@@ -24,7 +24,8 @@ app.use("/api/questions", authMiddleware, questionRoute)
 //answer route middleware
 app.use("/api/answers", authMiddleware, answerRoute)
 
-const port = 3333;
+// const port = 3333;
+const port = process.env.PORT || 3333;
 async function start(){
     try {
         const result = await dbConnection.execute("select 'test'")
