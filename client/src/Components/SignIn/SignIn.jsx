@@ -60,7 +60,7 @@ function SignIn({ toggleForm }) {
       <h4>Login to your account </h4>
       <p>
         Don’t have an account?
-        <Link className="create" onClick={toggleForm}>
+        <Link className="create ms-2" onClick={toggleForm}>
           Create a new account
         </Link>
       </p>

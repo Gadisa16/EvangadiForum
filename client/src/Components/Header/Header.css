@@ -31,3 +31,33 @@
     height: 30px;
     /* Adjust as needed */
 }
+
+@media (max-width: 1000px) {
+    .navbar {
+        height: auto;
+        padding: 10px 0;
+    }
+
+    .navbar-logo {
+        height: 24px;
+    }
+
+    .btn {
+        width: 100%;
+        margin-top: 10px;
+        height: 38px;
+    }
+
+    .navbar-collapse {
+        background: white;
+        padding: 10px 0;
+    }
+
+    .nav-link {
+        margin: 5px 0;
+        text-align: center;
+    }
+
+    .m-md-3 {
+        margin: 0 !important;
+    } }

@@ -97,7 +97,7 @@ function Header({ logOut }) {
             </Nav.Link>
           </Nav>
           <Nav className="m-0 m-md-3">
-            <button className="btn btn-success" onClick={handleButtonClick}>
+            <button className="btn btn-success" style={{fontSize:"1vw"}} onClick={handleButtonClick}>
               {user.userName ? `Hello ${user.userName} - Sign Out` : "Sign In"}
             </button>
           </Nav>
