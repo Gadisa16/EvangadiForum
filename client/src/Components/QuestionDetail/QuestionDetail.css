@@ -57,3 +57,60 @@ textarea {
     border: 1px solid #e01e5a !important;
     background: #fce9ef !important;
 }
+
+.vote-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.vote-button {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: #65676b;
+  font-size: 1rem;
+}
+
+.vote-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.vote-button.voted {
+  color: #1877f2;
+  background-color: rgba(24, 119, 242, 0.1);
+}
+
+.vote-button.voted i.fa-thumbs-down {
+  color: #e41e3f;
+  background-color: rgba(228, 30, 63, 0.1);
+}
+
+.vote-count {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #65676b;
+}
+
+.vote-button.voted .vote-count {
+  color: inherit;
+}
+
+.vote-button i {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.vote-button:hover i {
+  transform: scale(1.1);
+}
+
+.vote-button:active i {
+  transform: scale(0.95);
+}

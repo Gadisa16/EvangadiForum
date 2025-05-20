@@ -26,8 +26,9 @@ async function postAnswer(req, res) {
     }
 }
 async function getAnswer(req, res) {
-  // const { questionid } = req.body;
     const questionId = req.params.questionId;
+    const userId = req.user?.userid; // Get userId if user is authenticated
+
     if (!questionId) {
         return res
         .status(StatusCodes.BAD_REQUEST)
@@ -36,12 +37,27 @@ async function getAnswer(req, res) {
 
     try {
         const response = await dbconnection.query(
-            "SELECT answers.answer, users.username FROM answers  INNER JOIN users ON answers.userid = users.userid WHERE answers.questionid = ? ORDER BY answers.answerid DESC",
-            [questionId]
+            `SELECT 
+                a.answerid,
+                a.answer,
+                a.created_at,
+                u.username,
+                u.userid,
+                COALESCE(SUM(CASE WHEN av.vote_type = 'like' THEN 1 ELSE 0 END), 0) as likes,
+                COALESCE(SUM(CASE WHEN av.vote_type = 'dislike' THEN 1 ELSE 0 END), 0) as dislikes,
+                (SELECT vote_type FROM answer_votes WHERE answer_id = a.answerid AND user_id = ?) as user_vote
+            FROM answers a
+            INNER JOIN users u ON a.userid = u.userid
+            LEFT JOIN answer_votes av ON a.answerid = av.answer_id
+            WHERE a.questionid = ?
+            GROUP BY a.answerid, a.answer, a.created_at, u.username, u.userid
+            ORDER BY a.answerid DESC`,
+            [userId || null, questionId]
         );
         return res.status(StatusCodes.OK).json({ data: response[0] });
     } catch (error) {
         console.log("from get answer", error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Error fetching answers" });
     }
 }
 
