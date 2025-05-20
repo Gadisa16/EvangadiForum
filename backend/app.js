@@ -12,6 +12,7 @@ const dbConnection = require('./db/dbConfig');
 const userRoutes = require('./routes/userRoutes');
 const questionRoute = require('./routes/questionRoutes');
 const answerRoute = require('./routes/answerRoutes');
+const replyRoute = require('./routes/replyRoutes');
 const authMiddleware = require('./middleware/authMiddleware');
 
 //json middleware to extract to json data
@@ -23,6 +24,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/questions", authMiddleware, questionRoute)
 //answer route middleware
 app.use("/api/answers", authMiddleware, answerRoute)
+//reply route middleware
+app.use("/api/replies", authMiddleware, replyRoute)
 
 // const port = 3333;
 const port = process.env.PORT || 3000;

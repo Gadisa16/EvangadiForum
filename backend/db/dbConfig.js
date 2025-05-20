@@ -30,4 +30,31 @@ dbconnection.execute(`
   )
 `);
 
+// Create replies table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS replies (
+    replyid INT PRIMARY KEY AUTO_INCREMENT,
+    answerid INT NOT NULL,
+    userid INT NOT NULL,
+    reply_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (answerid) REFERENCES answers(answerid) ON DELETE CASCADE,
+    FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
+  )
+`);
+
+// Create reply_votes table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS reply_votes (
+    vote_id INT PRIMARY KEY AUTO_INCREMENT,
+    reply_id INT NOT NULL,
+    user_id INT NOT NULL,
+    vote_type ENUM('like', 'dislike') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reply_id) REFERENCES replies(replyid) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(userid) ON DELETE CASCADE,
+    UNIQUE KEY unique_reply_vote (reply_id, user_id)
+  )
+`);
+
 module.exports = dbconnection.promise();
