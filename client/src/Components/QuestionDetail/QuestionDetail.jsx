@@ -5,6 +5,7 @@ import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../axios";
 import "./QuestionDetail.css";
+import Reply from './Reply';
 
 function QuestionDetail() {
   const {
@@ -22,6 +23,7 @@ function QuestionDetail() {
   const { questionid } = useParams();
   const [dbAnswer, setdbAnswer] = useState([]);
   const [answerVotes, setAnswerVotes] = useState({});
+  const [replies, setReplies] = useState({});
   
   useEffect(() => {
     async function getAns() {
@@ -44,8 +46,20 @@ function QuestionDetail() {
               headers: { Authorization: `Bearer ${token}` }
             });
             votes[answer.answerid] = response.data;
+
+            // Fetch replies for each answer
+            const repliesResponse = await axios.get(
+              `/replies/all-replies/${answer.answerid}`,
+              {
+                headers: { Authorization: `Bearer ${token}` }
+              }
+            );
+            setReplies(prev => ({
+              ...prev,
+              [answer.answerid]: repliesResponse.data.data
+            }));
           } catch (error) {
-            console.error('Error fetching votes:', error);
+            console.error('Error fetching votes or replies:', error);
           }
         }
         setAnswerVotes(votes);
@@ -159,7 +173,7 @@ function QuestionDetail() {
   };
 
   return (
-    <div className="container top">
+    <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="card mb-4">
         <div className="card-body">
           <h4 className="card-title">Question</h4>
@@ -170,18 +184,22 @@ function QuestionDetail() {
 
       <div className="card mb-4">
         <div className="card-body">
-          <h4 className="card-title">Answers From The Community</h4>
+          <h4 className="card-title">
+            {dbAnswer.length === 0 
+              ? "No Answers From The Community yet" 
+              : `${dbAnswer.length} ${dbAnswer.length === 1 ? 'Answer' : 'Answers'} From The Community`}
+          </h4>
         </div>
       </div>
 
       {dbAnswer.map((answerData, index) => (
         <div className="card mb-3 info_question" key={index}>
-          <div className="card-body row">
-            <div className="col-md-4 d-flex flex-column align-items-center">
+          <div className="card-body row ms-2">
+            <div className="col-md-1 d-flex flex-column align-items-center">
               <i className="fas fa-user-circle fa-3x user mb-2" />
               <p className="username">{answerData.username}</p>
             </div>
-            <div className="col-md-8">
+            <div className="col-md-11 ps-5">
               <p className="answer-text">{answerData.answer}</p>
             </div>
             <div className="d-flex justify-content-end" style={{ marginLeft: "-40px" }}>
@@ -209,6 +227,12 @@ function QuestionDetail() {
               </div>
             </div>
           </div>
+          <Reply
+            answerId={answerData.answerid}
+            replies={replies[answerData.answerid] || []}
+            setReplies={setReplies}
+            user={user}
+          />
         </div>
       ))}
 
