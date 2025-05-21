@@ -1,80 +1,62 @@
-import Header from "./Components/Header/Header";
-import Landing from "./Components/Landing/Landing.jsx";
-import Footer from "./Components/Footer/Footer";
-import { Route, Routes, useNavigate } from "react-router-dom";
-import HomePage from "./Components/HomePage/HomePage";
-import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
+import { useContext } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import AskQuestion from "./Components/AskQuestion/AskQuestion";
-import SignUp from "./Components/SignUp/SignUp";
-import { UserProvider, userProvider } from "./Context/UserProvider";
-import axios from "./Components/axios";
-import { useContext, useEffect } from "react";
-import { QuestionContext } from "./Context/QuestionContext";
+import Footer from "./Components/Footer/Footer";
+import Header from "./Components/Header/Header";
+import HomePage from "./Components/HomePage/HomePage";
 import HowItWorks from "./Components/HowItWorks/HowItWorks";
-import  PrivateRoute  from "./Context/PrivateRoute.jsx";
-function App() {
-  const { questions, setQuestions } = useContext(QuestionContext);
-  const [user, setUser] = useContext(userProvider);
-  const token = localStorage.getItem("token");
-  const navigate = useNavigate();
+import Landing from "./Components/Landing/Landing.jsx";
+import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
+import SignUp from "./Components/SignUp/SignUp";
+import PrivateRoute from "./Context/PrivateRoute.jsx";
+import { QuestionProvider } from "./Context/QuestionContext"; // Import QuestionProvider
+import { userProvider } from "./Context/UserProvider";
 
-  function logOut() {
-    setUser({});
-    localStorage.removeItem("token"); // Change to remove the token
-    navigate("/"); // Redirect to home or login page
+function AppRoutes() {
+  const { isAuthenticated, isLoading } = useContext(userProvider);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
-
-  async function checkUser() {
-    try {
-      const { data } = await axios.get("/users/check", {
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      });
-
-      setUser({ userName: data.username, userId: data.userid });
-
-      // get all questions
-      const res = await axios.get("/questions/all_questions", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setQuestions(res.data.data);
-    } catch (error) {
-      console.log(error);
-      navigate("/");
-    }
-  }
-
-  useEffect(() => {
-    if (token) {
-      checkUser();
-    } else {
-      navigate("/");
-    }
-  }, [token]);
 
   return (
     <>
-      <Header logOut={logOut} />
+      <Header />
+      <div className="main-content" style={{minHeight:"100vh", position:"relative"}}>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <Landing />} />
         <Route
-          path="/home"
+          path="/question/:questionid"
           element={
             <PrivateRoute>
-              <HomePage />
+              <QuestionDetail />
             </PrivateRoute>
           }
         />
-        <Route path="/question/:questionid" element={<QuestionDetail />} />
-        <Route path="/ask" element={<AskQuestion />} />
+        <Route
+          path="/ask"
+          element={
+            <PrivateRoute>
+              <AskQuestion />
+            </PrivateRoute>
+          }
+        />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </div>
       <Footer />
     </>
+  );
+}
+
+function App() {
+  return (
+    <QuestionProvider> {/* Use QuestionProvider instead of QuestionContext.Provider */}
+      <AppRoutes />
+    </QuestionProvider>
   );
 }
 

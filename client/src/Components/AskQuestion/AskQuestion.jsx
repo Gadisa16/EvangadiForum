@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import { userProvider } from '../../Context/UserProvider';
-import { v4 as uuidv4 } from 'uuid';
-import axios from "../axios";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from 'uuid';
+import { userProvider } from '../../Context/UserProvider';
+import axios from "../axios";
 import "./AskQuestion.css";
 
 function AskQuestion() {
@@ -14,7 +14,7 @@ function AskQuestion() {
     reset,
   } = useForm();
 
-  const [user, setUser] = useContext(userProvider);
+  const { user } = useContext(userProvider);
   const token = localStorage.getItem("token");
 
   async function handlePost(data) {

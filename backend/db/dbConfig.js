@@ -16,6 +16,34 @@ const dbconnection = mysql2.createPool({
 //     }
 // });
 
+// Create questions table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS questions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    questionid VARCHAR(36) NOT NULL,
+    userid INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    tag VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE,
+    UNIQUE KEY unique_question (questionid)
+  )
+`);
+
+// Create answers table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS answers (
+    answerid INT PRIMARY KEY AUTO_INCREMENT,
+    userid INT NOT NULL,
+    questionid VARCHAR(36) NOT NULL,
+    answer TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE,
+    FOREIGN KEY (questionid) REFERENCES questions(questionid) ON DELETE CASCADE
+  )
+`);
+
 // Create answer_votes table if it doesn't exist
 dbconnection.execute(`
   CREATE TABLE IF NOT EXISTS answer_votes (

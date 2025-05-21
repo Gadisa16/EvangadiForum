@@ -1,65 +1,86 @@
-import React, { useContext, useEffect, useState } from 'react';
-import "./HomePage.css";
-import Question from '../Question/Question';
-import { userProvider } from '../../Context/UserProvider';
-import { useNavigate } from 'react-router-dom';
-import axios from "../axios";
-import { QuestionContext } from '../../Context/QuestionContext';
 import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { QuestionContext } from '../../Context/QuestionContext';
+import { userProvider } from '../../Context/UserProvider';
+import axios from "../axios";
+import Question from '../Question/Question';
+import "./HomePage.css";
 
 function HomePage() {
   const navigate = useNavigate();
-  const [user, setUser] = useContext(userProvider);
+  const { user, isAuthenticated } = useContext(userProvider);
   const { questions, setQuestions } = useContext(QuestionContext);
-  const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  function handleClick() {
+  function handleAskQuestion() {
+    if (!isAuthenticated) {
+      // Save the current location for redirect after login
+      navigate("/register", { state: { from: { pathname: "/ask" } } });
+      return;
+    }
     navigate("/ask");
   }
 
   useEffect(() => {
     async function fetchAllQuestions() {
       try {
-        const response = await axios.get("/questions/all_questions", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setQuestions(response.data.data);
-        setLoading(false);
+        setLoading(true);
+        setError(null);
+        const response = await axios.get("/questions/all_questions");
+        console.log("Full response:", response);
+        console.log("Questions data:", response.data.data);
+        if (response.data && response.data.data) {
+          console.log("Setting questions with:", response.data.data);
+          setQuestions(response.data.data);
+        } else {
+          setError("No questions found");
+        }
       } catch (error) {
         console.error("Error fetching questions:", error);
+        setError(error.response?.data?.msg || "Failed to fetch questions. Please try again later.");
+      } finally {
         setLoading(false);
       }
     }
     fetchAllQuestions();
-  }, [token, setQuestions]);
+  }, [setQuestions]);
 
   return (
-    <div className="container">
+    <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="homp">
         <div className="row hed mb-5">
           <div className="col-md-6 d-flex justify-content-center justify-content-md-start">
-            <button onClick={handleClick} className="qb">
+            <button onClick={handleAskQuestion} className="qb">
               Ask Question
             </button>
           </div>
           <div className="col-md-6 d-flex justify-content-center justify-content-md-end">
-            <h4 className="wel">Welcome : {user.userName}</h4>
+            {isAuthenticated ? (
+              <h4 className="wel">Welcome : {user.userName}</h4>
+            ) : (
+              <h4 className="wel">Welcome Guest</h4>
+            )}
           </div>
         </div>
         <h3 className="ns">Questions</h3>
       </div>
       {loading ? (
-        <div className="loading">Loading...</div>
+      <div className="loading">Loading...</div>
+      ) : error ? (
+        <div className="text-danger text-center">{error}</div>
+      ) : questions.length === 0 ? (
+        console.log("No questions available", questions),
+        <div className="text-center">No questions available</div>
       ) : (
         questions.map((question, index) => (
           <Question
-            key={index}
+            key={question.questionid || index}
             title={question.title}
             username={question.username}
             questionid={question.questionid}
+            isAuthenticated={isAuthenticated}
           />
         ))
       )}

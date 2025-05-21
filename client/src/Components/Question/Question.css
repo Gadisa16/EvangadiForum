@@ -5,7 +5,9 @@
 }
 
 .top_question {
-    height: 150px;
+    min-height: 100px;
+    height: auto;
+    cursor: pointer;
 }
 
 .user {

@@ -1,11 +1,8 @@
 import React, { useContext, useState } from "react";
-import "./SignIn.css";
-import { userProvider } from "../../Context/UserProvider";
-import axios from "../axios";
-import { useNavigate } from "react-router-dom";
-
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { userProvider } from "../../Context/UserProvider";
+import "./SignIn.css";
 
 function SignIn({ toggleForm }) {
   const {
@@ -13,45 +10,25 @@ function SignIn({ toggleForm }) {
     trigger,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm();
 
-  const navigate = useNavigate();
-  const [user, setUser] = useContext(userProvider);
-
+  const { login } = useContext(userProvider);
   const [passwordVisible, setPasswordVisible] = useState(true);
+  const [error, setError] = useState("");
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  async function logIn(data) {
-    try {
-      const response = await axios.post("/users/login", {
-        password: data.password,
-        email: data.email,
-      });
+  async function onSubmit(data) {
+    setError("");
+    const result = await login({
+      password: data.password,
+      email: data.email,
+    });
 
-      localStorage.setItem("token", response.data.token);
-
-      setUser({
-        userName: response.data.username,
-        userId: response.data.userid,
-      });
-
-      console.log(response);
-
-      navigate("/home");
-    } catch (error) {
-      if (error.response && error.response.status === 400) {
-        // Handle the "invalid credential" error here
-        alert("Invalid credentials. Please check your email and password.");
-
-        // You can set this error message to display in your UI or perform any other actions
-      } else {
-        console.log("Something went wrong:", error.message);
-        // Handle other error scenarios if needed
-      }
+    if (!result.success) {
+      setError(result.error);
     }
   }
 
@@ -59,12 +36,12 @@ function SignIn({ toggleForm }) {
     <div className="login__container col-md">
       <h4>Login to your account </h4>
       <p>
-        Don’t have an account?
+        Don't have an account?
         <Link className="create ms-2" onClick={toggleForm}>
           Create a new account
         </Link>
       </p>
-      <form onSubmit={handleSubmit(logIn)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <input
           type="text"
           className={errors.email && "invalid"}
@@ -80,6 +57,9 @@ function SignIn({ toggleForm }) {
             trigger("email");
           }}
         />
+        {errors.email && (
+          <div className="text-danger">{errors.email.message}</div>
+        )}
 
         <input
           type={passwordVisible ? "password" : "text"}
@@ -87,16 +67,19 @@ function SignIn({ toggleForm }) {
           placeholder=" Your Password"
           {...register("password", {
             required: "Password is required",
-
             minLength: {
               value: 8,
-              message: "Minimum password length is 8", // JS only: <p>error message</p> TS only support string
+              message: "Minimum password length is 8",
             },
           })}
           onKeyUp={() => {
             trigger("password");
           }}
         />
+        {errors.password && (
+          <div className="text-danger">{errors.password.message}</div>
+        )}
+
         <i onClick={togglePasswordVisibility}>
           {passwordVisible ? (
             <i className="fas fa-eye-slash" />
@@ -104,7 +87,10 @@ function SignIn({ toggleForm }) {
             <i className="fas fa-eye" />
           )}
         </i>
-        <button className="login__signInButton " type="submit">
+
+        {error && <div className="text-danger">{error}</div>}
+
+        <button className="login__signInButton" type="submit">
           Submit
         </button>
       </form>

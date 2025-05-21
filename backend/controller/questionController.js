@@ -31,14 +31,14 @@ async function allQuestions(req, res) {
             FROM questions q
             JOIN users u ON q.userid = u.userid
             ORDER BY q.id DESC;
-    `; //u and q are aliases.
-    const result = await dbconnection.query(query);
-
-    return res.status(StatusCodes.OK).json({ data: result[0] });
-} catch (error) {
-    console.error('Error fetching question details with usernames:', error);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
+        `;
+        const result = await dbconnection.query(query);
+        console.log("Database query result:", result[0]);
+        return res.status(StatusCodes.OK).json({ data: result[0] });
+    } catch (error) {
+        console.error('Error fetching question details with usernames:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
+    }
 }
-};
 
 module.exports = {  postQuestion, allQuestions };
