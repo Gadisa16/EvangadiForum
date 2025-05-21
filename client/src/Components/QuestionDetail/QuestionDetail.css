@@ -213,6 +213,7 @@ textarea {
 
 .replies-list {
   margin-top: 0.5rem;
+  padding-right: 1vw;
 }
 
 .reply-item {

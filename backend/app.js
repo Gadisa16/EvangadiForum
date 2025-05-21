@@ -13,7 +13,6 @@ const userRoutes = require('./routes/userRoutes');
 const questionRoute = require('./routes/questionRoutes');
 const answerRoute = require('./routes/answerRoutes');
 const replyRoute = require('./routes/replyRoutes');
-const authMiddleware = require('./middleware/authMiddleware');
 
 //json middleware to extract to json data
 app.use(express.json());
@@ -21,11 +20,11 @@ app.use(express.json());
 //user routes middleware
 app.use("/api/users", userRoutes);
 //question route middleware
-app.use("/api/questions", authMiddleware, questionRoute)
+app.use("/api/questions", questionRoute)
 //answer route middleware
-app.use("/api/answers", authMiddleware, answerRoute)
+app.use("/api/answers", answerRoute)
 //reply route middleware
-app.use("/api/replies", authMiddleware, replyRoute)
+app.use("/api/replies", replyRoute)
 
 // const port = 3333;
 const port = process.env.PORT || 3000;

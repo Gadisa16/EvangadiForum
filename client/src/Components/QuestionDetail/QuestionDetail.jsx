@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../axios";
@@ -16,9 +16,8 @@ function QuestionDetail() {
     setValue,
   } = useForm();
 
-  const token = localStorage.getItem("token");
-  const [user, setUser] = useContext(userProvider);
-
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useContext(userProvider);
   const { questions } = useContext(QuestionContext);
   const { questionid } = useParams();
   const [dbAnswer, setdbAnswer] = useState([]);
@@ -28,56 +27,56 @@ function QuestionDetail() {
   useEffect(() => {
     async function getAns() {
       try {
-        const ans = await axios.get(
-          `/answers/all-answers/${questionid}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const ans = await axios.get(`/answers/all-answers/${questionid}`);
         setdbAnswer(ans.data.data);
         
-        // Fetch votes for each answer immediately after getting answers
-        const votes = {};
-        for (const answer of ans.data.data) {
-          try {
-            const response = await axios.get(`/answers/${answer.answerid}/votes`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            votes[answer.answerid] = response.data;
+        // Only fetch votes and replies if user is authenticated
+        if (isAuthenticated) {
+          const votes = {};
+          for (const answer of ans.data.data) {
+            try {
+              const response = await axios.get(`/answers/${answer.answerid}/votes`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+              });
+              votes[answer.answerid] = response.data;
 
-            // Fetch replies for each answer
-            const repliesResponse = await axios.get(
-              `/replies/all-replies/${answer.answerid}`,
-              {
-                headers: { Authorization: `Bearer ${token}` }
-              }
-            );
-            setReplies(prev => ({
-              ...prev,
-              [answer.answerid]: repliesResponse.data.data
-            }));
-          } catch (error) {
-            console.error('Error fetching votes or replies:', error);
+              // Fetch replies for each answer
+              const repliesResponse = await axios.get(
+                `/replies/all-replies/${answer.answerid}`,
+                {
+                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                }
+              );
+              setReplies(prev => ({
+                ...prev,
+                [answer.answerid]: repliesResponse.data.data
+              }));
+            } catch (error) {
+              console.error('Error fetching votes or replies:', error);
+            }
           }
+          setAnswerVotes(votes);
         }
-        setAnswerVotes(votes);
       } catch (error) {
         console.log(error);
       }
     }
-
+  
     if (questionid) {
       getAns();
     }
-  }, [questionid, token]);
+  }, [questionid, isAuthenticated]);
 
   const selectedQuestion = questions.find(
     (ques) => ques.questionid === questionid
   );
 
   async function handleClick(data) {
+    if (!isAuthenticated) {
+      navigate("/register", { state: { from: { pathname: `/question/${questionid}` } } });
+      return;
+    }
+
     try {
       await axios.post(
         "/answers/postanswers",
@@ -88,21 +87,12 @@ function QuestionDetail() {
         },
         {
           headers: {
-            Authorization: "Bearer " + token,
+            Authorization: "Bearer " + localStorage.getItem("token"),
           },
         }
       );
 
-      const ans = await axios.get(
-        `/answers/all-answers/${questionid}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Update the dbAnswer state with the fetched answers
+      const ans = await axios.get(`/answers/all-answers/${questionid}`);
       setdbAnswer(ans.data.data);
       setValue("answer", ""); // Clear the textarea after posting
     } catch (error) {
@@ -111,6 +101,11 @@ function QuestionDetail() {
   }
 
   const handleVote = async (answerId, voteType) => {
+    if (!isAuthenticated) {
+      navigate("/register", { state: { from: { pathname: `/question/${answerId}` } } });
+      return;
+    }
+
     try {
       // Optimistically update the UI
       const currentVotes = answerVotes[answerId] || { votes: { likes: 0, dislikes: 0 }, userVote: null };
@@ -141,7 +136,7 @@ function QuestionDetail() {
       const response = await axios.post(
         `/answers/${answerId}/vote`,
         { voteType },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       
       // Update with server response to ensure consistency
@@ -163,7 +158,7 @@ function QuestionDetail() {
       console.error('Error voting:', error);
       // Revert optimistic update on error
       const response = await axios.get(`/answers/${answerId}/votes`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setAnswerVotes(prev => ({
         ...prev,
@@ -186,7 +181,7 @@ function QuestionDetail() {
         <div className="card-body">
           <h4 className="card-title">
             {dbAnswer.length === 0 
-              ? "No Answers From The Community yet" 
+              ? "No Answers From The Community yet, be the first to answer" 
               : `${dbAnswer.length} ${dbAnswer.length === 1 ? 'Answer' : 'Answers'} From The Community`}
           </h4>
         </div>
@@ -207,7 +202,7 @@ function QuestionDetail() {
                 <button
                   className={`vote-button ${answerVotes[answerData.answerid]?.userVote === 'like' ? 'voted' : ''}`}
                   onClick={() => handleVote(answerData.answerid, 'like')}
-                  title="Like"
+                  title={isAuthenticated ? "Like" : "Sign in to like"}
                 >
                   <i className="fas fa-thumbs-up"></i>
                   {answerVotes[answerData.answerid]?.votes?.likes > 0 && (
@@ -217,7 +212,7 @@ function QuestionDetail() {
                 <button
                   className={`vote-button ${answerVotes[answerData.answerid]?.userVote === 'dislike' ? 'voted' : ''}`}
                   onClick={() => handleVote(answerData.answerid, 'dislike')}
-                  title="Dislike"
+                  title={isAuthenticated ? "Dislike" : "Sign in to dislike"}
                 >
                   <i className="fas fa-thumbs-down"></i>
                   {answerVotes[answerData.answerid]?.votes?.dislikes > 0 && (
@@ -227,12 +222,14 @@ function QuestionDetail() {
               </div>
             </div>
           </div>
-          <Reply
-            answerId={answerData.answerid}
-            replies={replies[answerData.answerid] || []}
-            setReplies={setReplies}
-            user={user}
-          />
+          {isAuthenticated && (
+            <Reply
+              answerId={answerData.answerid}
+              replies={replies[answerData.answerid] || []}
+              setReplies={setReplies}
+              user={user}
+            />
+          )}
         </div>
       ))}
 
@@ -241,36 +238,48 @@ function QuestionDetail() {
           <h2 className="pt-3">Answer The Top Question.</h2>
           <p className="lead mb-3">Share your knowledge and help others</p>
 
-          <form onSubmit={handleSubmit(handleClick)}>
-            <div className="form-group">
-              <textarea
-                className={`form-control w-75 mx-auto ${errors.answer ? "is-invalid" : ""}`}
-                rows="6"
-                placeholder="Your answer..."
-                {...register("answer", {
-                  required: "Answer is required",
-                  maxLength: {
-                    value: 300,
-                    message: "Maximum allowed length is 300",
-                  },
-                })}
-                onKeyUp={() => {
-                  trigger("answer");
-                }}
-              />
-              {errors.answer && (
-                <div className="invalid-feedback">
-                  {errors.answer.message}
-                </div>
-              )}
+          {isAuthenticated ? (
+            <form onSubmit={handleSubmit(handleClick)}>
+              <div className="form-group">
+                <textarea
+                  className={`form-control w-75 mx-auto ${errors.answer ? "is-invalid" : ""}`}
+                  rows="6"
+                  placeholder="Your answer..."
+                  {...register("answer", {
+                    required: "Answer is required",
+                    maxLength: {
+                      value: 300,
+                      message: "Maximum allowed length is 300",
+                    },
+                  })}
+                  onKeyUp={() => {
+                    trigger("answer");
+                  }}
+                />
+                {errors.answer && (
+                  <div className="invalid-feedback">
+                    {errors.answer.message}
+                  </div>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="btn btn-success mt-3"
+              >
+                Post Your Answer
+              </button>
+            </form>
+          ) : (
+            <div className="text-center">
+              <p className="text-muted">Please sign in to post an answer</p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => navigate("/register", { state: { from: { pathname: `/question/${questionid}` } } })}
+              >
+                Sign In to Answer
+              </button>
             </div>
-            <button
-              type="submit"
-              className="btn btn-success mt-3"
-            >
-              Post Your Answer
-            </button>
-          </form>
+          )}
         </div>
       </div>
     </div>

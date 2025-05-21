@@ -1,26 +1,26 @@
 import React, { useContext } from "react";
-import logo from "../../Images/evangadi-logo-header.png";
-import { Navbar, Container, Nav } from "react-bootstrap";
+import { Container, Nav, Navbar } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { userProvider } from "../../Context/UserProvider";
+import logo from "../../Images/evangadi-logo-header.png";
 import "./Header.css";
 
-function Header({ logOut }) {
-  const [user, setUser] = useContext(userProvider);
+function Header() {
+  const { user, logout, isAuthenticated } = useContext(userProvider);
   const navigate = useNavigate();
 
-  function handleButtonClick() {
-    if (user.userName) {
-      logOut();
+  function handleAuthClick() {
+    if (isAuthenticated) {
+      logout();
     } else {
-      navigate("/"); // Redirect to login page if not signed in
+      navigate("/register");
     }
   }
 
   return (
     <Navbar expand="lg" className="navbar" fixed="top" variant="dark">
       <Container>
-        <Navbar.Brand as={Link} to="/home">
+        <Navbar.Brand as={Link} to="/">
           <img src={logo} alt="Logo" className="navbar-logo" />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" className="navbar-toggler-icon">
@@ -30,7 +30,7 @@ function Header({ logOut }) {
         </Navbar.Toggle>
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/home" className="black link">
+            <Nav.Link as={Link} to="/" className="black link">
               Home
             </Nav.Link>
             <Nav.Link as={Link} to="/how-it-works" className="black link">
@@ -38,7 +38,7 @@ function Header({ logOut }) {
             </Nav.Link>
           </Nav>
           <Nav className="m-0 m-md-3">
-            <button className="btn btn-success" style={{fontSize:"1vw", lineHeight:"1"}} onClick={handleButtonClick}>
+            <button className="btn btn-success" style={{fontSize:"1vw", lineHeight:"1"}} onClick={handleAuthClick}>
               {user.userName ? `Hello ${user.userName} - Sign Out` : "Sign In"}
             </button>
           </Nav>

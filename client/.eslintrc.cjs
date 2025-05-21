@@ -17,5 +17,9 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    "camelcase": ["error", { 
+      "properties": "never",
+      "allow": ["questionid"] 
+    }]
   },
 }

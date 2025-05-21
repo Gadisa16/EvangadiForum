@@ -6,16 +6,15 @@ import App from './App';
 import { QuestionProvider } from './Context/QuestionContext';
 import { UserProvider } from './Context/UserProvider';
 
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <UserProvider>
-    <QuestionProvider>
-      <BrowserRouter>
+  <BrowserRouter>
+    <UserProvider>
+      <QuestionProvider>
         <App />
-      </BrowserRouter>
-    </QuestionProvider>
-  </UserProvider>
+      </QuestionProvider>
+    </UserProvider>
+  </BrowserRouter>
 );
 
 // If you want to start measuring performance in your app, pass a function

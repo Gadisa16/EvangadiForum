@@ -1,25 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
-import "./Landing.css";
-import SignIn from "../SignIn/SignIn";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
-import SignUp from "../SignUp/SignUp";
 import { userProvider } from "../../Context/UserProvider";
+import SignIn from "../SignIn/SignIn";
+import SignUp from "../SignUp/SignUp";
+import "./Landing.css";
 
 function Landing() {
-  const [user, setUser] = useContext(userProvider);
+  const { user, logout } = useContext(userProvider);
   const [showSignIn, setSignIn] = useState(true);
 
   function toggleForm() {
     setSignIn((prevState) => !prevState);
   }
-
-  useEffect(() => {
-    if (user.userName) {
-      setUser({});
-      localStorage.setItem("token", "");
-      console.log("deleted user");
-    }
-  }, [user, setUser]);
 
   return (
     <div className="home">
@@ -35,7 +27,7 @@ function Landing() {
             <a href="https://example.com" className="about" target="_blank" >About</a>
             <h1 className="network pb-3">Evangadi Networks</h1>
             <p>
-              No matter what stage of life you are in, whether you’re just
+              No matter what stage of life you are in, whether you're just
               starting elementary school or being promoted to CEO of a Fortune
               500 company, you have much to offer to those who are trying to
               follow in your footsteps.
