@@ -1,11 +1,33 @@
-import React, { useContext, useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
+import 'quill-emoji/dist/quill-emoji.css';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from "react-hook-form";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../axios";
 import "./QuestionDetail.css";
 import Reply from './Reply';
+
+// Import Quill modules
+
+// Configure DOMPurify to allow images
+DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+  if (node.tagName === 'IMG') {
+    node.setAttribute('style', 'max-width: 100%; height: 200px;');
+  }
+});
+
+// Function to convert relative image URLs to absolute URLs
+const convertImageUrls = (html) => {
+  if (!html) return '';
+  // Get the base URL without the /api suffix
+  const baseUrl = axios.defaults.baseURL.replace('/api', '');
+  return html.replace(/src="\/uploads\//g, `src="${baseUrl}/uploads/`);
+};
 
 function QuestionDetail() {
   const {
@@ -14,6 +36,7 @@ function QuestionDetail() {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm();
 
   const navigate = useNavigate();
@@ -23,7 +46,72 @@ function QuestionDetail() {
   const [dbAnswer, setdbAnswer] = useState([]);
   const [answerVotes, setAnswerVotes] = useState({});
   const [replies, setReplies] = useState({});
-  
+  const quillRef = useRef(null);
+
+  // Configure Quill modules
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        ['blockquote', 'code-block'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['link', 'image'],
+        ['clean']
+      ],
+      handlers: {
+        image: function() {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (file) {
+              const formData = new FormData();
+              formData.append('image', file);
+
+              try {
+                const response = await axios.post('/upload-image', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
+                  }
+                });
+
+                if (response.data && response.data.url) {
+                  const quill = this.quill;
+                  const range = quill.getSelection(true);
+                  // Get the base URL without the /api suffix
+                  const baseUrl = axios.defaults.baseURL.replace('/api', '');
+                  const fullImageUrl = `${baseUrl}${response.data.url}`;
+                  quill.insertEmbed(range.index, 'image', fullImageUrl);
+                } else {
+                  console.error('Invalid response format:', response.data);
+                }
+              } catch (error) {
+                console.error('Error uploading image:', error);
+                // Show error to user
+                alert('Failed to upload image. Please try again.');
+              }
+            }
+          };
+        }
+      }
+    }
+  }), []);
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'blockquote', 'code-block',
+    'list', 'bullet',
+    'color', 'background',
+    'link', 'image'
+  ];
+
   useEffect(() => {
     async function getAns() {
       try {
@@ -78,10 +166,13 @@ function QuestionDetail() {
     }
 
     try {
-      await axios.post(
+      // Sanitize HTML content
+      const sanitizedAnswer = DOMPurify.sanitize(data.answer);
+      
+      const response = await axios.post(
         "/answers/postanswers",
         {
-          answer: data.answer,
+          answer: sanitizedAnswer,
           questionid: questionid,
           userid: user.userId,
         },
@@ -92,11 +183,14 @@ function QuestionDetail() {
         }
       );
 
-      const ans = await axios.get(`/answers/all-answers/${questionid}`);
-      setdbAnswer(ans.data.data);
-      setValue("answer", ""); // Clear the textarea after posting
+      if (response.data) {
+        const ans = await axios.get(`/answers/all-answers/${questionid}`);
+        setdbAnswer(ans.data.data);
+        setValue("answer", ""); // Clear the editor after posting
+      }
     } catch (error) {
-      console.log(error);
+      console.error("Error posting answer:", error.response?.data || error);
+      alert("Failed to post answer. Please try again.");
     }
   }
 
@@ -173,7 +267,12 @@ function QuestionDetail() {
         <div className="card-body">
           <h4 className="card-title">Question</h4>
           <h5 className="card-subtitle mb-2 text-muted">Title: {selectedQuestion?.title}</h5>
-          <p className="card-text">{selectedQuestion?.description}</p>
+          <div className="card-text">
+            {parse(DOMPurify.sanitize(convertImageUrls(selectedQuestion?.description), {
+              ADD_TAGS: ['img'],
+              ADD_ATTR: ['src', 'alt', 'style']
+            }))}
+          </div>
         </div>
       </div>
 
@@ -195,7 +294,12 @@ function QuestionDetail() {
               <p className="username">{answerData.username}</p>
             </div>
             <div className="col-md-11 ps-5">
-              <p className="answer-text">{answerData.answer}</p>
+              <div className="answer-text">
+                {parse(DOMPurify.sanitize(convertImageUrls(answerData.answer), {
+                  ADD_TAGS: ['img'],
+                  ADD_ATTR: ['src', 'alt', 'style']
+                }))}
+              </div>
             </div>
             <div className="d-flex justify-content-end" style={{ marginLeft: "-40px" }}>
               <div className="vote-buttons">
@@ -241,21 +345,22 @@ function QuestionDetail() {
           {isAuthenticated ? (
             <form onSubmit={handleSubmit(handleClick)}>
               <div className="form-group">
-                <textarea
-                  className={`form-control w-75 mx-auto ${errors.answer ? "is-invalid" : ""}`}
-                  rows="6"
-                  placeholder="Your answer..."
-                  {...register("answer", {
-                    required: "Answer is required",
-                    maxLength: {
-                      value: 300,
-                      message: "Maximum allowed length is 300",
-                    },
-                  })}
-                  onKeyUp={() => {
-                    trigger("answer");
-                  }}
-                />
+                <div className="rich-text-editor">
+                  <ReactQuill
+                    ref={quillRef}
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    value={watch("answer") || ""}
+                    onChange={(content) => {
+                      setValue("answer", content);
+                      trigger("answer");
+                    }}
+                    placeholder="Your answer..."
+                    className={`w-75 mx-auto ${errors.answer ? "invalid" : ""}`}
+                    preserveWhitespace={true}
+                  />
+                </div>
                 {errors.answer && (
                   <div className="invalid-feedback">
                     {errors.answer.message}

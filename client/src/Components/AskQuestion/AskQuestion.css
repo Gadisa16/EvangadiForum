@@ -2,3 +2,51 @@
     border: 1px solid #e01e5a !important;
     background: #fce9ef !important;
 }
+
+.rich-text-editor {
+    margin: 20px auto;
+    max-width: 75%;
+}
+
+.rich-text-editor .ql-container {
+    min-height: 200px;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    background: #fefcfc;
+}
+
+.rich-text-editor .ql-toolbar {
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+    background: #f8f8f8;
+    border-color: #ccc;
+}
+
+.rich-text-editor .ql-editor {
+    min-height: 200px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.rich-text-editor .ql-editor p {
+    margin-bottom: 1em;
+}
+
+.rich-text-editor .ql-editor pre {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+.rich-text-editor .ql-editor code {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+.rich-text-editor .ql-editor blockquote {
+    border-left: 4px solid #ccc;
+    margin: 0;
+    padding-left: 16px;
+    color: #666;
+}
