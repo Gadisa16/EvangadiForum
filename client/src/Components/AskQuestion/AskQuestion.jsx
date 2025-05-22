@@ -1,5 +1,8 @@
-import React, { useContext } from 'react';
+import DOMPurify from 'dompurify';
+import React, { useContext, useMemo, useRef } from 'react';
 import { useForm } from "react-hook-form";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { v4 as uuidv4 } from 'uuid';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../axios";
@@ -12,20 +15,90 @@ function AskQuestion() {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm();
 
   const { user } = useContext(userProvider);
   const token = localStorage.getItem("token");
+  const quillRef = useRef(null);
+
+  // Configure Quill modules
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        ['blockquote', 'code-block'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['link', 'image'],
+        ['clean']
+      ],
+      handlers: {
+        image: function() {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (file) {
+              const formData = new FormData();
+              formData.append('image', file);
+
+              try {
+                const response = await axios.post('/upload-image', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
+                  }
+                });
+
+                if (response.data && response.data.url) {
+                  const quill = this.quill;
+                  const range = quill.getSelection(true);
+                  // Get the base URL without the /api suffix
+                  const baseUrl = axios.defaults.baseURL.replace('/api', '');
+                  const fullImageUrl = `${baseUrl}${response.data.url}`;
+                  quill.insertEmbed(range.index, 'image', fullImageUrl);
+                } else {
+                  console.error('Invalid response format:', response.data);
+                }
+              } catch (error) {
+                console.error('Error uploading image:', error);
+                // Show error to user
+                alert('Failed to upload image. Please try again.');
+              }
+            }
+          };
+        }
+      }
+    }
+  }), []);
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'blockquote', 'code-block',
+    'list', 'bullet',
+    'color', 'background',
+    'link', 'image'
+  ];
 
   async function handlePost(data) {
     const questionId = uuidv4();
     try {
+      // Sanitize HTML content
+      const sanitizedDescription = DOMPurify.sanitize(data.question);
+      
       await axios.post(
         "/questions/post",
         {
           tag: data.tag,
           title: data.title,
-          description: data.question,
+          description: sanitizedDescription,
           questionId: questionId,
           userId: user.userId,
         },
@@ -57,7 +130,7 @@ function AskQuestion() {
       <div>
         <h2 className="pb-2">Ask a Public Question</h2>
         <form onSubmit={handleSubmit(handlePost)}>
-          <div>
+          <div className="d-flex flex-column align-items-center mb-4">
             <textarea
               placeholder="Tag"
               className={`w-75 ${errors.tag ? "invalid" : ""}`}
@@ -73,7 +146,7 @@ function AskQuestion() {
             />
             {errors.tag && <small className="text-danger">{errors.tag.message}</small>}
           </div>
-          <div>
+          <div className="d-flex flex-column align-items-center mb-4">
             <textarea
               className={`w-75 ${errors.title ? "invalid" : ""}`}
               rows="2"
@@ -89,19 +162,20 @@ function AskQuestion() {
             />
             {errors.title && <small className="text-danger">{errors.title.message}</small>}
           </div>
-          <div>
-            <textarea
-              className={`w-75 ${errors.question ? "invalid" : ""}`}
-              rows="6"
+          <div className="rich-text-editor">
+            <ReactQuill
+              ref={quillRef}
+              theme="snow"
+              modules={modules}
+              formats={formats}
+              value={watch("question") || ""}
+              onChange={(content) => {
+                setValue("question", content);
+                trigger("question");
+              }}
               placeholder="Question Description..."
-              {...register("question", {
-                required: "Question is required",
-                maxLength: {
-                  value: 300,
-                  message: "Maximum allowed length is 300",
-                },
-              })}
-              onKeyUp={() => trigger("question")}
+              className={`w-75 mx-auto ${errors.question ? "invalid" : ""}`}
+              preserveWhitespace={true}
             />
             {errors.question && <small className="text-danger">{errors.question.message}</small>}
           </div>

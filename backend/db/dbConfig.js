@@ -85,4 +85,19 @@ dbconnection.execute(`
   )
 `);
 
+// Create images table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS images (
+    imageid INT PRIMARY KEY AUTO_INCREMENT,
+    userid INT NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    originalname VARCHAR(255) NOT NULL,
+    mimetype VARCHAR(100) NOT NULL,
+    size INT NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
+  )
+`);
+
 module.exports = dbconnection.promise();
