@@ -41,12 +41,18 @@ function QuestionDetail() {
 
   const navigate = useNavigate();
   const { user, isAuthenticated } = useContext(userProvider);
-  const { questions } = useContext(QuestionContext);
+  const { questions, setQuestions } = useContext(QuestionContext);
   const { questionid } = useParams();
   const [dbAnswer, setdbAnswer] = useState([]);
   const [answerVotes, setAnswerVotes] = useState({});
   const [replies, setReplies] = useState({});
   const quillRef = useRef(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [editingContent, setEditingContent] = useState({
+    type: null, // 'question', 'answer', or 'reply'
+    id: null,
+    content: null
+  });
 
   // Configure Quill modules
   const modules = useMemo(() => ({
@@ -261,17 +267,153 @@ function QuestionDetail() {
     }
   };
 
+  // Add click handler for images
+  const handleImageClick = (e) => {
+    if (e.target.tagName === 'IMG') {
+      setSelectedImage(e.target.src);
+    }
+  };
+
+  // Add click handler for modal close
+  const handleModalClose = () => {
+    setSelectedImage(null);
+  };
+
+  // Add click handler for modal background
+  const handleModalBackgroundClick = (e) => {
+    if (e.target.className === 'image-modal show') {
+      setSelectedImage(null);
+    }
+  };
+
+  // Function to handle edit button click
+  const handleEditClick = (type, id, content) => {
+    setEditingContent({
+      type,
+      id,
+      content
+    });
+  };
+
+  // Function to handle content update
+  const handleContentUpdate = async (updatedContent) => {
+    try {
+      let endpoint = '';
+      let data = {};
+
+      switch (editingContent.type) {
+        case 'question':
+          endpoint = `/questions/${questionid}`;
+          data = { description: updatedContent };
+          break;
+        case 'answer':
+          endpoint = `/answers/${editingContent.id}`;
+          data = { answer: updatedContent };
+          break;
+        case 'reply':
+          endpoint = `/replies/${editingContent.id}`;
+          data = { reply: updatedContent };
+          break;
+        default:
+          return;
+      }
+
+      const response = await axios.put(endpoint, data, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      if (response.data) {
+        // Refresh the content
+        if (editingContent.type === 'question') {
+          // Refresh question
+          const updatedQuestions = questions.map(q => 
+            q.questionid === questionid 
+              ? { ...q, description: updatedContent }
+              : q
+          );
+          setQuestions(updatedQuestions);
+        } else if (editingContent.type === 'answer') {
+          // Refresh answers
+          const updatedAnswers = dbAnswer.map(a =>
+            a.answerid === editingContent.id
+              ? { ...a, answer: updatedContent }
+              : a
+          );
+          setdbAnswer(updatedAnswers);
+        } else if (editingContent.type === 'reply') {
+          // Refresh replies
+          const updatedReplies = replies[editingContent.id].map(r =>
+            r.replyid === editingContent.id
+              ? { ...r, reply: updatedContent }
+              : r
+          );
+          setReplies(prev => ({
+            ...prev,
+            [editingContent.id]: updatedReplies
+          }));
+        }
+
+        // Clear editing state
+        setEditingContent({ type: null, id: null, content: null });
+      }
+    } catch (error) {
+      console.error('Error updating content:', error);
+      alert('Failed to update content. Please try again.');
+    }
+  };
+
+  // Function to cancel editing
+  const handleCancelEdit = () => {
+    setEditingContent({ type: null, id: null, content: null });
+  };
+
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="card mb-4">
         <div className="card-body">
           <h4 className="card-title">Question</h4>
           <h5 className="card-subtitle mb-2 text-muted">Title: {selectedQuestion?.title}</h5>
-          <div className="card-text">
-            {parse(DOMPurify.sanitize(convertImageUrls(selectedQuestion?.description), {
-              ADD_TAGS: ['img'],
-              ADD_ATTR: ['src', 'alt', 'style']
-            }))}
+          <div className="position-relative">
+            {editingContent.type === 'question' ? (
+              <div className="rich-text-editor">
+                <ReactQuill
+                  theme="snow"
+                  modules={modules}
+                  formats={formats}
+                  value={editingContent.content}
+                  onChange={(content) => setEditingContent(prev => ({ ...prev, content }))}
+                />
+                <div className="mt-3">
+                  <button 
+                    className="btn btn-success me-2"
+                    onClick={() => handleContentUpdate(editingContent.content)}
+                  >
+                    Save Changes
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="card-text" onClick={handleImageClick}>
+                {parse(DOMPurify.sanitize(convertImageUrls(selectedQuestion?.description), {
+                  ADD_TAGS: ['img'],
+                  ADD_ATTR: ['src', 'alt', 'style']
+                }))}
+                {user.userId === selectedQuestion?.userid && (
+                  <button
+                    className="btn btn-link edit-button"
+                    onClick={() => handleEditClick('question', questionid, selectedQuestion.description)}
+                  >
+                    <i className="fas fa-pencil-alt"></i>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -294,12 +436,46 @@ function QuestionDetail() {
               <p className="username">{answerData.username}</p>
             </div>
             <div className="col-md-11 ps-5">
-              <div className="answer-text">
-                {parse(DOMPurify.sanitize(convertImageUrls(answerData.answer), {
-                  ADD_TAGS: ['img'],
-                  ADD_ATTR: ['src', 'alt', 'style']
-                }))}
-              </div>
+              {editingContent.type === 'answer' && editingContent.id === answerData.answerid ? (
+                <div className="rich-text-editor">
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    value={editingContent.content}
+                    onChange={(content) => setEditingContent(prev => ({ ...prev, content }))}
+                  />
+                  <div className="mt-3">
+                    <button 
+                      className="btn btn-success me-2"
+                      onClick={() => handleContentUpdate(editingContent.content)}
+                    >
+                      Save Changes
+                    </button>
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="answer-text position-relative" onClick={handleImageClick}>
+                  {parse(DOMPurify.sanitize(convertImageUrls(answerData.answer), {
+                    ADD_TAGS: ['img'],
+                    ADD_ATTR: ['src', 'alt', 'style']
+                  }))}
+                  {user.userId === answerData.userid && (
+                    <button
+                      className="btn btn-link edit-button"
+                      onClick={() => handleEditClick('answer', answerData.answerid, answerData.answer)}
+                    >
+                      <i className="fas fa-pencil-alt"></i>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="d-flex justify-content-end" style={{ marginLeft: "-40px" }}>
               <div className="vote-buttons">
@@ -332,6 +508,10 @@ function QuestionDetail() {
               replies={replies[answerData.answerid] || []}
               setReplies={setReplies}
               user={user}
+              onEditReply={handleEditClick}
+              editingContent={editingContent}
+              onContentUpdate={handleContentUpdate}
+              onCancelEdit={handleCancelEdit}
             />
           )}
         </div>
@@ -386,6 +566,23 @@ function QuestionDetail() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Image Modal */}
+      <div 
+        className={`image-modal ${selectedImage ? 'show' : ''}`} 
+        onClick={handleModalBackgroundClick}
+      >
+        {selectedImage && (
+          <>
+            <span className="image-modal-close" onClick={handleModalClose}>&times;</span>
+            <img 
+              src={selectedImage} 
+              alt="Enlarged view" 
+              className="image-modal-content"
+            />
+          </>
+        )}
       </div>
     </div>
   );

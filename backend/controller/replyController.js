@@ -2,9 +2,9 @@ const dbconnection = require("../db/dbConfig");
 const { StatusCodes } = require("http-status-codes");
 
 async function postReply(req, res) {
-    const { reply_text, answerid, userid } = req.body;
+    const { reply, answerid, userid } = req.body;
 
-    if (!reply_text || !answerid || !userid) {
+    if (!reply || !answerid || !userid) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json({ msg: "Please provide all required values." });
@@ -12,14 +12,20 @@ async function postReply(req, res) {
 
     try {
         const [result] = await dbconnection.query(
-            "INSERT INTO replies(userid, answerid, reply_text) VALUES(?,?,?)",
-            [userid, answerid, reply_text]
+            "INSERT INTO replies(userid, answerid, reply) VALUES(?,?,?)",
+            [userid, answerid, reply]
         );
         return res
             .status(StatusCodes.CREATED)
             .json({ 
                 msg: "Reply posted successfully",
-                replyId: result.insertId 
+                data: {
+                    replyid: result.insertId,
+                    reply,
+                    userid,
+                    answerid,
+                    created_at: new Date()
+                }
             });
     } catch (error) {
         console.log("reply posted error:", error);
@@ -43,7 +49,7 @@ async function getReplies(req, res) {
         const response = await dbconnection.query(
             `SELECT 
                 r.replyid,
-                r.reply_text,
+                r.reply,
                 r.created_at,
                 u.username,
                 u.userid,
@@ -54,7 +60,7 @@ async function getReplies(req, res) {
             INNER JOIN users u ON r.userid = u.userid
             LEFT JOIN reply_votes rv ON r.replyid = rv.reply_id
             WHERE r.answerid = ?
-            GROUP BY r.replyid, r.reply_text, r.created_at, u.username, u.userid
+            GROUP BY r.replyid, r.reply, r.created_at, u.username, u.userid
             ORDER BY r.created_at ASC`,
             [userId || null, answerId]
         );
@@ -130,4 +136,39 @@ async function handleReplyVote(req, res) {
     }
 }
 
-module.exports = { postReply, getReplies, handleReplyVote }; 
+async function updateReply(req, res) {
+    const { replyid } = req.params;
+    const { reply } = req.body;
+    const userId = req.user.userid;
+
+    try {
+        // First check if the reply exists and belongs to the user
+        const [existingReply] = await dbconnection.query(
+            "SELECT * FROM replies WHERE replyid = ? AND userid = ?",
+            [replyid, userId]
+        );
+
+        if (existingReply.length === 0) {
+            return res.status(StatusCodes.FORBIDDEN).json({ 
+                msg: "You don't have permission to edit this reply" 
+            });
+        }
+
+        // Update the reply
+        await dbconnection.query(
+            "UPDATE replies SET reply = ? WHERE replyid = ?",
+            [reply, replyid]
+        );
+
+        return res.status(StatusCodes.OK).json({ 
+            msg: "Reply updated successfully" 
+        });
+    } catch (error) {
+        console.error('Error updating reply:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+            msg: "Something went wrong, try again later" 
+        });
+    }
+}
+
+module.exports = { postReply, getReplies, handleReplyVote, updateReply }; 
