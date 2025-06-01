@@ -2,6 +2,8 @@ const dbConnection = require('../db/dbConfig');
 const bcrypt = require('bcrypt');
 const { StatusCodes } = require('http-status-codes');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs').promises;
 
 async function register(req, res) {
     const { username, firstname, lastname, email, password } = req.body;
@@ -74,4 +76,95 @@ async function check(req, res) {
     res.status(StatusCodes.OK).json({ msg: "valid user", username, userid });
 }
 
-module.exports = { register, login, check };
+async function updateProfile(req, res) {
+    const { username, email, bio, firstname, lastname } = req.body;
+    const userId = req.user.userid;
+    const profilePicture = req.file;
+
+    try {
+        // Check if email is already taken by another user
+        if (email) {
+            const [existingUser] = await dbConnection.query(
+                "SELECT * FROM users WHERE email = ? AND userid != ?",
+                [email, userId]
+            );
+
+            if (existingUser.length > 0) {
+                return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Email already in use" });
+            }
+        }
+
+        let profilePicturePath = null;
+        if (profilePicture) {
+            profilePicturePath = `/uploads/${profilePicture.filename}`;
+        }
+
+        // Update user profile
+        const [result] = await dbConnection.query(
+            `UPDATE users 
+             SET username = COALESCE(?, username),
+                 email = COALESCE(?, email),
+                 bio = COALESCE(?, bio),
+                 firstname = COALESCE(?, firstname),
+                 lastname = COALESCE(?, lastname),
+                 profilePicture = COALESCE(?, profilePicture)
+             WHERE userid = ?`,
+            [username, email, bio, firstname, lastname, profilePicturePath, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+        }
+
+        // Get updated user data
+        const [users] = await dbConnection.query(
+            "SELECT userid, username, email, firstname, lastname, profilePicture, bio FROM users WHERE userid = ?",
+            [userId]
+        );
+
+        res.json({
+            msg: "Profile updated successfully",
+            user: {
+                userId: users[0].userid,
+                username: users[0].username,
+                email: users[0].email,
+                firstname: users[0].firstname,
+                lastname: users[0].lastname,
+                profilePicture: users[0].profilePicture,
+                bio: users[0].bio
+            }
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Server error" });
+    }
+}
+
+async function getProfile(req, res) {
+    try {
+        const [users] = await dbConnection.query(
+            "SELECT userid, username, email, firstname, lastname, profilePicture, bio FROM users WHERE userid = ?",
+            [req.user.userid]
+        );
+
+        if (users.length === 0) {
+            return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+        }
+
+        const user = users[0];
+        res.json({
+            userId: user.userid,
+            username: user.username,
+            email: user.email,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            profilePicture: user.profilePicture,
+            bio: user.bio
+        });
+    } catch (error) {
+        console.error('Get profile error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Server error" });
+    }
+}
+
+module.exports = { register, login, check, updateProfile, getProfile };

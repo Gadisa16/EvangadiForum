@@ -13,6 +13,38 @@ function HomePage() {
   const { questions, setQuestions } = useContext(QuestionContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [greeting, setGreeting] = useState('');
+
+  // Function to capitalize first letter of each word
+  const capitalizeName = (name) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Function to get random greeting
+  const getRandomGreeting = () => {
+    const greetings = [
+      'Hi',
+      'Hello',
+      'Hey',
+      'Greetings',
+      'Welcome back',
+      'Good to see you',
+      'Hey there',
+      'Hi there',
+      'Hello there',
+      'Welcome'
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setGreeting(getRandomGreeting());
+    }
+  }, [isAuthenticated]);
 
   function handleAskQuestion() {
     if (!isAuthenticated) {
@@ -58,7 +90,7 @@ function HomePage() {
           </div>
           <div className="col-md-6 d-flex justify-content-center justify-content-md-end">
             {isAuthenticated ? (
-              <h4 className="wel">Welcome : {user.userName}</h4>
+              <h4 className="wel">{greeting}, {capitalizeName(user.userName)}!</h4>
             ) : (
               <h4 className="wel">Welcome Guest</h4>
             )}
@@ -67,7 +99,7 @@ function HomePage() {
         <h3 className="ns">Questions</h3>
       </div>
       {loading ? (
-      <div className="loading">Loading...</div>
+        <div className="loading">Loading...</div>
       ) : error ? (
         <div className="text-danger text-center">{error}</div>
       ) : questions.length === 0 ? (
@@ -78,9 +110,10 @@ function HomePage() {
           <Question
             key={question.questionid || index}
             title={question.title}
-            username={question.username}
+            username={capitalizeName(question.username)}
             questionid={question.questionid}
             isAuthenticated={isAuthenticated}
+            created_at={question.created_at}
           />
         ))
       )}

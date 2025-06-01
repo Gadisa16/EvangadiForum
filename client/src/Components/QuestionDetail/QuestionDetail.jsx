@@ -201,69 +201,141 @@ function QuestionDetail() {
   }
 
   const handleVote = async (answerId, voteType) => {
-    if (!isAuthenticated) {
-      navigate("/register", { state: { from: { pathname: `/question/${answerId}` } } });
+    if (!user) {
+      alert('Please login to vote');
       return;
     }
 
     try {
-      // Optimistically update the UI
-      const currentVotes = answerVotes[answerId] || { votes: { likes: 0, dislikes: 0 }, userVote: null };
-      const newVotes = { ...currentVotes };
-      
-      // If clicking the same vote type, remove the vote
-      if (currentVotes.userVote === voteType) {
-        newVotes.userVote = null;
-        newVotes.votes[voteType === 'like' ? 'likes' : 'dislikes']--;
-      } else {
-        // If changing vote type, update counts
-        if (currentVotes.userVote === 'like') {
-          newVotes.votes.likes--;
-        } else if (currentVotes.userVote === 'dislike') {
-          newVotes.votes.dislikes--;
+      // Optimistically update UI
+      const updatedAnswers = dbAnswer.map(answer => {
+        if (answer.answerid === answerId) {
+          const currentVote = answer.userVote || 0;
+          const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
+          return {
+            ...answer,
+            votes: answer.votes + voteChange,
+            userVote: currentVote === voteType ? 0 : voteType
+          };
         }
-        newVotes.userVote = voteType;
-        newVotes.votes[voteType === 'like' ? 'likes' : 'dislikes']++;
-      }
+        return answer;
+      });
+      setdbAnswer(updatedAnswers);
 
-      // Update state immediately
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: newVotes
-      }));
-
-      // Make the API call
+      // Make API call
       const response = await axios.post(
         `/answers/${answerId}/vote`,
         { voteType },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      
-      // Update with server response to ensure consistency
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: {
-          votes: response.data.votes,
-          userVote: response.data.userVote
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      }));
+      );
 
-      // Show success message
-      const message = response.data.message === 'Vote removed' 
-        ? 'Vote removed successfully' 
-        : 'Vote recorded successfully';
-      
-      console.log(message);
+      if (response.data) {
+        // Update with server response
+        const updatedAnswers = dbAnswer.map(answer => {
+          if (answer.answerid === answerId) {
+            return {
+              ...answer,
+              votes: response.data.votes,
+              userVote: response.data.userVote
+            };
+          }
+          return answer;
+        });
+        setdbAnswer(updatedAnswers);
+      }
     } catch (error) {
       console.error('Error voting:', error);
-      // Revert optimistic update on error
-      const response = await axios.get(`/answers/${answerId}/votes`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      // Revert optimistic update
+      const updatedAnswers = dbAnswer.map(answer => {
+        if (answer.answerid === answerId) {
+          return {
+            ...answer,
+            votes: answer.votes,
+            userVote: answer.userVote
+          };
+        }
+        return answer;
       });
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: response.data
-      }));
+      setdbAnswer(updatedAnswers);
+      alert('Failed to register vote. Please try again.');
+    }
+  };
+
+  const handleReplyVote = async (replyId, voteType) => {
+    if (!user) {
+      alert('Please login to vote');
+      return;
+    }
+
+    try {
+      // Optimistically update UI
+      const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+        acc[answerId] = answerReplies.map(reply => {
+          if (reply.replyid === replyId) {
+            const currentVote = reply.userVote || 0;
+            const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
+            return {
+              ...reply,
+              votes: reply.votes + voteChange,
+              userVote: currentVote === voteType ? 0 : voteType
+            };
+          }
+          return reply;
+        });
+        return acc;
+      }, {});
+      setReplies(updatedReplies);
+
+      // Make API call
+      const response = await axios.post(
+        `/replies/${replyId}/vote`,
+        { voteType },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data) {
+        // Update with server response
+        const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+          acc[answerId] = answerReplies.map(reply => {
+            if (reply.replyid === replyId) {
+              return {
+                ...reply,
+                votes: response.data.votes,
+                userVote: response.data.userVote
+              };
+            }
+            return reply;
+          });
+          return acc;
+        }, {});
+        setReplies(updatedReplies);
+      }
+    } catch (error) {
+      console.error('Error voting on reply:', error);
+      // Revert optimistic update
+      const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+        acc[answerId] = answerReplies.map(reply => {
+          if (reply.replyid === replyId) {
+            return {
+              ...reply,
+              votes: reply.votes,
+              userVote: reply.userVote
+            };
+          }
+          return reply;
+        });
+        return acc;
+      }, {});
+      setReplies(updatedReplies);
+      alert('Failed to register vote. Please try again.');
     }
   };
 
@@ -367,12 +439,26 @@ function QuestionDetail() {
     setEditingContent({ type: null, id: null, content: null });
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="card mb-4">
         <div className="card-body">
           <h4 className="card-title">Question</h4>
           <h5 className="card-subtitle mb-2 text-muted">Title: {selectedQuestion?.title}</h5>
+          {selectedQuestion?.created_at && (
+            <small className="text-muted d-block mb-3 posted_date">Posted on {formatDate(selectedQuestion.created_at)}</small>
+          )}
           <div className="position-relative">
             {editingContent.type === 'question' ? (
               <div className="rich-text-editor">
@@ -466,6 +552,9 @@ function QuestionDetail() {
                     ADD_TAGS: ['img'],
                     ADD_ATTR: ['src', 'alt', 'style']
                   }))}
+                  {answerData.created_at && (
+                    <small className="text-muted d-block mt-2 posted_date">Answered on {formatDate(answerData.created_at)}</small>
+                  )}
                   {user.userId === answerData.userid && (
                     <button
                       className="btn btn-link edit-button"

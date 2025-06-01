@@ -1,50 +1,88 @@
-import React, { useContext } from "react";
-import { Container, Nav, Navbar } from "react-bootstrap";
+import React, { useContext, useEffect, useState } from "react";
+import { FaCog, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { userProvider } from "../../Context/UserProvider";
-import logo from "../../Images/evangadi-logo-header.png";
+import axios from "../../axios";
+import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import "./Header.css";
 
 function Header() {
-  const { user, logout, isAuthenticated } = useContext(userProvider);
+  const { user, isAuthenticated, logout } = useContext(userProvider);
   const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
 
-  function handleAuthClick() {
+  useEffect(() => {
     if (isAuthenticated) {
-      logout();
-    } else {
-      navigate("/register");
+      fetchProfile();
     }
-  }
+  }, [isAuthenticated]);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get("/users/profile");
+      setProfilePicture(response.data.profilePicture);
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
+    <div
+      ref={ref}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick(e);
+      }}
+      className="profile-icon-container"
+    >
+      {children}
+    </div>
+  ));
 
   return (
-    <Navbar expand="lg" className="navbar" fixed="top" variant="dark">
-      <Container>
-        <Navbar.Brand as={Link} to="/">
-          <img src={logo} alt="Logo" className="navbar-logo" />
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" className="navbar-toggler-icon">
-          <span>
-            <i className="fas fa-bars" style={{ color: "black", fontSize: "2em" }}></i>
-          </span>
-        </Navbar.Toggle>
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/" className="black link">
-              Home
-            </Nav.Link>
-            <Nav.Link as={Link} to="/how-it-works" className="black link">
-              How it Works
-            </Nav.Link>
-          </Nav>
-          <Nav className="m-0 m-md-3">
-            <button className="btn btn-success" style={{fontSize:"1vw", lineHeight:"1"}} onClick={handleAuthClick}>
-              {user.userName ? `Hello ${user.userName} - Sign Out` : "Sign In"}
-            </button>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+    <nav className="navbar">
+      <div className="nav-brand">
+        <Link to="/">Evangadi Forum</Link>
+      </div>
+      <div className="nav-links">
+        {isAuthenticated ? (
+          <>
+            <Link to="/home">Home</Link>
+            <Link to="/ask">Ask Question</Link>
+            <div className="profile-dropdown">
+              <CustomToggle>
+                <div className="profile-icon">
+                  <ProfilePicture profilePicture={profilePicture} size="medium" />
+                </div>
+              </CustomToggle>
+              <div className="dropdown-menu">
+                <Link to="/profile" className="dropdown-item">
+                  <FaUser /> Profile
+                </Link>
+                <Link to="/settings" className="dropdown-item">
+                  <FaCog /> Settings
+                </Link>
+                <div className="dropdown-divider"></div>
+                <button onClick={handleLogout} className="dropdown-item">
+                  <FaSignOutAlt /> Sign Out
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
+      </div>
+    </nav>
   );
 }
 

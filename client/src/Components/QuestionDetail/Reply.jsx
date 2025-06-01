@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -8,11 +10,100 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const handleReplyVote = async (replyId, voteType) => {
+    if (!user) {
+      alert('Please login to vote');
+      return;
+    }
+
+    try {
+      // Optimistically update UI
+      const updatedReplies = replies.map(reply => {
+        if (reply.replyid === replyId) {
+          const currentVote = reply.user_vote || null;
+          const voteChange = currentVote === voteType ? -1 : (currentVote === null ? 1 : 2);
+          return {
+            ...reply,
+            likes: voteType === 'like' ? reply.likes + voteChange : reply.likes,
+            dislikes: voteType === 'dislike' ? reply.dislikes + voteChange : reply.dislikes,
+            user_vote: currentVote === voteType ? null : voteType
+          };
+        }
+        return reply;
+      });
+      setReplies(prev => ({
+        ...prev,
+        [answerId]: updatedReplies
+      }));
+
+      // Make API call
+      const response = await axios.post(
+        `/replies/${replyId}/vote`,
+        { voteType },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data) {
+        // Update with server response
+        const updatedReplies = replies.map(reply => {
+          if (reply.replyid === replyId) {
+            return {
+              ...reply,
+              likes: response.data.votes.likes,
+              dislikes: response.data.votes.dislikes,
+              user_vote: response.data.userVote
+            };
+          }
+          return reply;
+        });
+        setReplies(prev => ({
+          ...prev,
+          [answerId]: updatedReplies
+        }));
+      }
+    } catch (error) {
+      console.error('Error voting on reply:', error);
+      // Revert optimistic update
+      const updatedReplies = replies.map(reply => {
+        if (reply.replyid === replyId) {
+          return {
+            ...reply,
+            likes: reply.likes,
+            dislikes: reply.dislikes,
+            user_vote: reply.user_vote
+          };
+        }
+        return reply;
+      });
+      setReplies(prev => ({
+        ...prev,
+        [answerId]: updatedReplies
+      }));
+      alert('Failed to register vote. Please try again.');
+    }
+  };
+
   const handleSubmitReply = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        '/replies/post-reply',
+        '/replies/postreply',
         {
           reply: replyContent,
           answerid: answerId,
@@ -128,7 +219,7 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
                   <div className="reply-user-info">
                     <span className="username">{reply.username}</span>
                     <span className="reply-time">
-                      {new Date(reply.created_at).toLocaleDateString()}
+                      {formatDate(reply.created_at)}
                     </span>
                   </div>
                   {user.userId === reply.userid && (
@@ -140,7 +231,31 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
                     </button>
                   )}
                 </div>
-                <p className="reply-text">{reply.reply}</p>
+                <div className="reply-text">
+                  {parse(DOMPurify.sanitize(reply.reply))}
+                </div>
+                <div className="reply-votes d-flex align-items-center justify-content-center">
+                  <button
+                    className={`vote-button ${reply.user_vote === 'like' ? 'voted' : ''}`}
+                    onClick={() => handleReplyVote(reply.replyid, 'like')}
+                    title={user ? "Like" : "Sign in to like"}
+                  >
+                    <i className="fas fa-thumbs-up"></i>
+                    {reply.likes > 0 && (
+                      <span className="vote-count">{reply.likes}</span>
+                    )}
+                  </button>
+                  <button
+                    className={`vote-button ${reply.user_vote === 'dislike' ? 'voted' : ''}`}
+                    onClick={() => handleReplyVote(reply.replyid, 'dislike')}
+                    title={user ? "Dislike" : "Sign in to dislike"}
+                  >
+                    <i className="fas fa-thumbs-down"></i>
+                    {reply.dislikes > 0 && (
+                      <span className="vote-count">{reply.dislikes}</span>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>

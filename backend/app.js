@@ -2,7 +2,44 @@ const express = require('express');
 const cors = require('cors')
 require("dotenv").config()
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const app = express();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  },
+});
 
 // Configure CORS
 app.use(cors({
@@ -21,6 +58,7 @@ const replyRoute = require('./routes/replyRoutes');
 
 //json middleware to extract to json data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //user routes middleware
 app.use("/api/users", userRoutes);
@@ -55,7 +93,13 @@ start()
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ msg: "File size should be less than 5MB" });
+    }
+    return res.status(400).json({ msg: err.message });
+  }
+  res.status(500).json({ msg: "Something went wrong!" });
 });
 
 module.exports = app;

@@ -12,20 +12,32 @@ async function postReply(req, res) {
 
     try {
         const [result] = await dbconnection.query(
-            "INSERT INTO replies(userid, answerid, reply) VALUES(?,?,?)",
+            "INSERT INTO replies(userid, answerid, reply_text) VALUES(?,?,?)",
             [userid, answerid, reply]
         );
+
+        // Fetch the newly created reply with user info
+        const [newReply] = await dbconnection.query(
+            `SELECT 
+                r.replyid,
+                r.reply_text as reply,
+                r.created_at,
+                u.username,
+                u.userid,
+                0 as likes,
+                0 as dislikes,
+                null as user_vote
+            FROM replies r
+            INNER JOIN users u ON r.userid = u.userid
+            WHERE r.replyid = ?`,
+            [result.insertId]
+        );
+
         return res
             .status(StatusCodes.CREATED)
             .json({ 
                 msg: "Reply posted successfully",
-                data: {
-                    replyid: result.insertId,
-                    reply,
-                    userid,
-                    answerid,
-                    created_at: new Date()
-                }
+                data: newReply[0]
             });
     } catch (error) {
         console.log("reply posted error:", error);
@@ -46,10 +58,10 @@ async function getReplies(req, res) {
     }
 
     try {
-        const response = await dbconnection.query(
+        const [response] = await dbconnection.query(
             `SELECT 
                 r.replyid,
-                r.reply,
+                r.reply_text as reply,
                 r.created_at,
                 u.username,
                 u.userid,
@@ -60,11 +72,11 @@ async function getReplies(req, res) {
             INNER JOIN users u ON r.userid = u.userid
             LEFT JOIN reply_votes rv ON r.replyid = rv.reply_id
             WHERE r.answerid = ?
-            GROUP BY r.replyid, r.reply, r.created_at, u.username, u.userid
+            GROUP BY r.replyid, r.reply_text, r.created_at, u.username, u.userid
             ORDER BY r.created_at ASC`,
             [userId || null, answerId]
         );
-        return res.status(StatusCodes.OK).json({ data: response[0] });
+        return res.status(StatusCodes.OK).json({ data: response });
     } catch (error) {
         console.log("Error fetching replies:", error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Error fetching replies" });
@@ -94,7 +106,11 @@ async function handleReplyVote(req, res) {
                     "DELETE FROM reply_votes WHERE reply_id = ? AND user_id = ?",
                     [replyId, userId]
                 );
-                return res.json({ message: "Vote removed" });
+                return res.json({ 
+                    message: "Vote removed",
+                    votes: { likes: 0, dislikes: 0 },
+                    userVote: null
+                });
             } else {
                 // Update vote if changing vote type
                 await dbconnection.query(
@@ -156,7 +172,7 @@ async function updateReply(req, res) {
 
         // Update the reply
         await dbconnection.query(
-            "UPDATE replies SET reply = ? WHERE replyid = ?",
+            "UPDATE replies SET reply_text = ? WHERE replyid = ?",
             [reply, replyid]
         );
 

@@ -1,11 +1,13 @@
 import { useContext } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import "./App.css";
 import AskQuestion from "./Components/AskQuestion/AskQuestion";
 import Footer from "./Components/Footer/Footer";
 import Header from "./Components/Header/Header";
 import HomePage from "./Components/HomePage/HomePage";
 import HowItWorks from "./Components/HowItWorks/HowItWorks";
 import Landing from "./Components/Landing/Landing.jsx";
+import Profile from "./Components/Profile/Profile";
 import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
 import SignUp from "./Components/SignUp/SignUp";
 import PrivateRoute from "./Context/PrivateRoute.jsx";
@@ -39,6 +41,14 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <AskQuestion />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
             </PrivateRoute>
           }
         />
