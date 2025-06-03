@@ -61,4 +61,25 @@ async function getAnswer(req, res) {
     }
 }
 
-module.exports = { postAnswer, getAnswer };
+async function updateAnswer(req, res) {
+    const { answerid } = req.params;
+    const { answer } = req.body;
+    
+    if (!answer) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide the updated content" });
+    }
+
+    try {
+        await dbconnection.query(
+            "UPDATE answers SET answer = ? WHERE answerid = ?",
+            [answer, answerid]
+        );
+        
+        return res.status(StatusCodes.OK).json({ msg: "Answer updated successfully" });
+    } catch (error) {
+        console.error('Error updating answer:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
+    }
+}
+
+module.exports = { postAnswer, getAnswer, updateAnswer };

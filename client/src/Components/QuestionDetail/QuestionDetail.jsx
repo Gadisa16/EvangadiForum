@@ -46,6 +46,7 @@ function QuestionDetail() {
   const [dbAnswer, setdbAnswer] = useState([]);
   const [answerVotes, setAnswerVotes] = useState({});
   const [replies, setReplies] = useState({});
+  const [questionData, setQuestionData] = useState(null);
   const quillRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingContent, setEditingContent] = useState({
@@ -53,6 +54,22 @@ function QuestionDetail() {
     id: null,
     content: null
   });
+
+  // Fetch question data when component mounts
+  useEffect(() => {
+    async function fetchQuestion() {
+      try {
+        const response = await axios.get(`/questions/${questionid}`);
+        setQuestionData(response.data.data);
+      } catch (error) {
+        console.error('Error fetching question:', error);
+      }
+    }
+
+    if (questionid) {
+      fetchQuestion();
+    }
+  }, [questionid]);
 
   // Configure Quill modules
   const modules = useMemo(() => ({
@@ -160,10 +177,6 @@ function QuestionDetail() {
       getAns();
     }
   }, [questionid, isAuthenticated]);
-
-  const selectedQuestion = questions.find(
-    (ques) => ques.questionid === questionid
-  );
 
   async function handleClick(data) {
     if (!isAuthenticated) {
@@ -454,10 +467,21 @@ function QuestionDetail() {
     <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="card mb-4">
         <div className="card-body">
-          <h4 className="card-title">Question</h4>
-          <h5 className="card-subtitle mb-2 text-muted">Title: {selectedQuestion?.title}</h5>
-          {selectedQuestion?.created_at && (
-            <small className="text-muted d-block mb-3 posted_date">Posted on {formatDate(selectedQuestion.created_at)}</small>
+          <div className="d-flex align-items-center mb-3">
+            <h4 className="card-title mb-0 me-2">Question</h4>
+            {user.userId === questionData?.userid && (
+              <button
+                className="btn btn-link p-0 edit-button"
+                style={{top: "16px", right: "16px" }}
+                onClick={() => handleEditClick('question', questionid, questionData.description)}
+              >
+                <i className="fas fa-pencil-alt"></i>
+              </button>
+            )}
+          </div>
+          <h5 className="card-subtitle mb-2 text-muted">Title: {questionData?.title}</h5>
+          {questionData?.created_at && (
+            <small className="text-muted d-block mb-3 posted_date">Posted on {formatDate(questionData.created_at)}</small>
           )}
           <div className="position-relative">
             {editingContent.type === 'question' ? (
@@ -486,18 +510,10 @@ function QuestionDetail() {
               </div>
             ) : (
               <div className="card-text" onClick={handleImageClick}>
-                {parse(DOMPurify.sanitize(convertImageUrls(selectedQuestion?.description), {
+                {parse(DOMPurify.sanitize(convertImageUrls(questionData?.description), {
                   ADD_TAGS: ['img'],
                   ADD_ATTR: ['src', 'alt', 'style']
                 }))}
-                {user.userId === selectedQuestion?.userid && (
-                  <button
-                    className="btn btn-link edit-button"
-                    onClick={() => handleEditClick('question', questionid, selectedQuestion.description)}
-                  >
-                    <i className="fas fa-pencil-alt"></i>
-                  </button>
-                )}
               </div>
             )}
           </div>

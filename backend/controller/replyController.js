@@ -155,35 +155,21 @@ async function handleReplyVote(req, res) {
 async function updateReply(req, res) {
     const { replyid } = req.params;
     const { reply } = req.body;
-    const userId = req.user.userid;
+    
+    if (!reply) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide the updated content" });
+    }
 
     try {
-        // First check if the reply exists and belongs to the user
-        const [existingReply] = await dbconnection.query(
-            "SELECT * FROM replies WHERE replyid = ? AND userid = ?",
-            [replyid, userId]
-        );
-
-        if (existingReply.length === 0) {
-            return res.status(StatusCodes.FORBIDDEN).json({ 
-                msg: "You don't have permission to edit this reply" 
-            });
-        }
-
-        // Update the reply
         await dbconnection.query(
-            "UPDATE replies SET reply_text = ? WHERE replyid = ?",
+            "UPDATE replies SET reply = ? WHERE replyid = ?",
             [reply, replyid]
         );
-
-        return res.status(StatusCodes.OK).json({ 
-            msg: "Reply updated successfully" 
-        });
+        
+        return res.status(StatusCodes.OK).json({ msg: "Reply updated successfully" });
     } catch (error) {
         console.error('Error updating reply:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
-            msg: "Something went wrong, try again later" 
-        });
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
     }
 }
 

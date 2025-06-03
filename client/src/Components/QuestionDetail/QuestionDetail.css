@@ -1,5 +1,5 @@
 .top {
-    margin-top: 84px;
+    margin-top: 2vw;
 }
 
 .h65 {
@@ -299,27 +299,39 @@ textarea {
 }
 
 .edit-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    color: #666;
-    padding: 0.25rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    border: 1px;
-    border-radius: 4px;
-    width: 4.5vw;
-    background-color: #f3f2ef !important;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0;
+  color: darkblue;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  width: 30px;
+  height: 30px;
+  background-color: #e9f2f5 !important;
+}
+
+.edit-button:hover {
+  color: #333;
+}
+
+/* Specific styles for answer edit button */
+.answer-text .edit-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* Specific styles for reply edit button */
+.reply-content .edit-button {
+  position: static;
+  margin-left: auto;
 }
 
 .card-text:hover .edit-button,
 .answer-text:hover .edit-button,
 .reply-text:hover .edit-button {
-    opacity: 1;
-}
-
-.edit-button:hover {
-    color: #0a66c2;
+    opacity: 0.7;
 }
 
 .card-text,
@@ -380,6 +392,7 @@ textarea {
 .answer-text {
     font-size: 16px;
     line-height: 1.6;
+    padding-right: 24px;
 }
 
 .answer-text p {
