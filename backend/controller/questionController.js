@@ -27,17 +27,24 @@ async function postQuestion(req,res){
 async function allQuestions(req, res) {
     try {
         const query = `
-            SELECT q.questionid, q.title, q.description, q.id, q.created_at, u.username
+            SELECT q.questionid, q.title, q.description, q.created_at, u.username
             FROM questions q
             JOIN users u ON q.userid = u.userid
-            ORDER BY q.id DESC;
+            ORDER BY q.created_at DESC;
         `;
-        const result = await dbconnection.query(query);
-        console.log("Database query result:", result[0]);
-        return res.status(StatusCodes.OK).json({ data: result[0] });
+        const [questions] = await dbconnection.query(query);
+        
+        if (!questions) {
+            return res.status(StatusCodes.OK).json({ data: [] });
+        }
+
+        return res.status(StatusCodes.OK).json({ data: questions });
     } catch (error) {
-        console.error('Error fetching question details with usernames:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
+        console.error('Error fetching questions:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+            msg: "Failed to load questions. Please try again later.",
+            error: error.message 
+        });
     }
 }
 

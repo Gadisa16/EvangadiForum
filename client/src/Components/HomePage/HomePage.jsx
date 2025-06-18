@@ -13,42 +13,74 @@ function HomePage() {
   const { questions, setQuestions } = useContext(QuestionContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [greeting, setGreeting] = useState('');
+  const [userStats, setUserStats] = useState({
+    questionsCount: 0,
+    answersCount: 0,
+    profileCompletion: 0,
+    activityScore: 0
+  });
+  const [userProfile, setUserProfile] = useState({
+    bio: '',
+    username: ''
+  });
 
   // Function to capitalize first letter of each word
   const capitalizeName = (name) => {
+    if (!name) return '';
     return name
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
-  // Function to get random greeting
-  const getRandomGreeting = () => {
-    const greetings = [
-      'Hi',
-      'Hello',
-      'Hey',
-      'Greetings',
-      'Welcome back',
-      'Good to see you',
-      'Hey there',
-      'Hi there',
-      'Hello there',
-      'Welcome'
-    ];
-    return greetings[Math.floor(Math.random() * greetings.length)];
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('/users/profile', {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      setUserProfile({
+        bio: response.data.bio || '',
+        username: response.data.username || ''
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      setGreeting(getRandomGreeting());
+  const fetchUserStats = async () => {
+    try {
+      const response = await axios.get('/users/stats', {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      setUserStats(response.data);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
     }
-  }, [isAuthenticated]);
+  };
+
+  const fetchQuestions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get("/questions/all_questions");
+      
+      if (response.data && Array.isArray(response.data.data)) {
+        setQuestions(response.data.data);
+      } else {
+        setQuestions([]);
+        console.warn('Unexpected response format:', response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+      setError(err.response?.data?.msg || "Failed to load questions. Please try again later.");
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   function handleAskQuestion() {
     if (!isAuthenticated) {
-      // Save the current location for redirect after login
       navigate("/register", { state: { from: { pathname: "/ask" } } });
       return;
     }
@@ -56,28 +88,12 @@ function HomePage() {
   }
 
   useEffect(() => {
-    async function fetchAllQuestions() {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axios.get("/questions/all_questions");
-        console.log("Full response:", response);
-        console.log("Questions data:", response.data.data);
-        if (response.data && response.data.data) {
-          console.log("Setting questions with:", response.data.data);
-          setQuestions(response.data.data);
-        } else {
-          setError("No questions found");
-        }
-      } catch (error) {
-        console.error("Error fetching questions:", error);
-        setError(error.response?.data?.msg || "Failed to fetch questions. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+    fetchQuestions();
+    if (isAuthenticated) {
+      fetchUserStats();
+      fetchUserProfile();
     }
-    fetchAllQuestions();
-  }, [setQuestions]);
+  }, [isAuthenticated]);
 
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
@@ -90,7 +106,56 @@ function HomePage() {
           </div>
           <div className="col-md-6 d-flex justify-content-center justify-content-md-end">
             {isAuthenticated ? (
-              <h4 className="wel">{greeting}, {capitalizeName(user.userName)}!</h4>
+              <div className="user-welcome">
+                <div className="user-stats">
+                  <h3>Welcome back, {capitalizeName(userProfile.username)}!</h3>
+                  {userProfile.bio && (
+                    <p className="user-bio">{userProfile.bio}</p>
+                  )}
+                  <div className="progress-section">
+                    <div className="progress-label">
+                      <span>Profile Completion</span>
+                      <span>{userStats.profileCompletion}%</span>
+                    </div>
+                    <div className="progress">
+                      <div 
+                        className="progress-bar" 
+                        role="progressbar" 
+                        style={{ width: `${userStats.profileCompletion}%` }}
+                        aria-valuenow={userStats.profileCompletion} 
+                        aria-valuemin="0" 
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="progress-section">
+                    <div className="progress-label">
+                      <span>Activity Score</span>
+                      <span>{userStats.activityScore}</span>
+                    </div>
+                    <div className="progress">
+                      <div 
+                        className="progress-bar" 
+                        role="progressbar" 
+                        style={{ width: `${Math.min((userStats.activityScore) / 2, 100)}%` }}
+                        aria-valuenow={userStats.activityScore} 
+                        aria-valuemin="0" 
+                        aria-valuemax="200"
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="stats-info">
+                    <div className="stat-item">
+                      <i className="fas fa-question-circle"></i>
+                      <span>{userStats.questionsCount} Questions</span>
+                    </div>
+                    <div className="stat-item">
+                      <i className="fas fa-comment-dots"></i>
+                      <span>{userStats.answersCount} Answers</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
               <h4 className="wel">Welcome Guest</h4>
             )}
@@ -103,7 +168,6 @@ function HomePage() {
       ) : error ? (
         <div className="text-danger text-center">{error}</div>
       ) : questions.length === 0 ? (
-        console.log("No questions available", questions),
         <div className="text-center">No questions available</div>
       ) : (
         questions.map((question, index) => (
@@ -122,3 +186,4 @@ function HomePage() {
 }
 
 export default HomePage;
+

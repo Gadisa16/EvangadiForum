@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 
 //user controller
-const { register, login, check, updateProfile, getProfile } = require('../controller/userController');
+const { register, login, check, updateProfile, getProfile, getUserStats } = require('../controller/userController');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -49,5 +49,6 @@ router.get("/check", authMiddleware, check)
 // Protected routes
 router.put("/profile", authMiddleware, upload.single('profilePicture'), updateProfile)
 router.get("/profile", authMiddleware, getProfile)
+router.get("/stats", authMiddleware, getUserStats)
 
 module.exports = router;

@@ -167,4 +167,50 @@ async function getProfile(req, res) {
     }
 }
 
-module.exports = { register, login, check, updateProfile, getProfile };
+async function getUserStats(req, res) {
+    try {
+        const userId = req.user.userid;
+
+        // Get questions count
+        const [questions] = await dbConnection.query(
+            "SELECT COUNT(*) as count FROM questions WHERE userid = ?",
+            [userId]
+        );
+
+        // Get answers count
+        const [answers] = await dbConnection.query(
+            "SELECT COUNT(*) as count FROM answers WHERE userid = ?",
+            [userId]
+        );
+
+        // Get user profile completion
+        const [user] = await dbConnection.query(
+            "SELECT username, email, firstname, lastname, profilePicture, bio FROM users WHERE userid = ?",
+            [userId]
+        );
+
+        if (user.length === 0) {
+            return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+        }
+
+        // Calculate profile completion
+        const profileFields = ['username', 'email', 'firstname', 'lastname', 'profilePicture', 'bio'];
+        const filledFields = profileFields.filter(field => user[0][field] !== null && user[0][field] !== '');
+        const profileCompletion = Math.round((filledFields.length / profileFields.length) * 100);
+
+        // Calculate activity score (weighted sum of questions and answers)
+        const activityScore = (questions[0].count * 10) + (answers[0].count * 5);
+
+        res.json({
+            questionsCount: questions[0].count,
+            answersCount: answers[0].count,
+            profileCompletion,
+            activityScore
+        });
+    } catch (error) {
+        console.error('Get user stats error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Server error" });
+    }
+}
+
+module.exports = { register, login, check, updateProfile, getProfile, getUserStats };
