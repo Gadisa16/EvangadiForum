@@ -70,34 +70,29 @@ function Header() {
             <Link to="/home">Home</Link>
             <Link to="/ask">Ask Question</Link>
             <div className="notification-container">
-              <button 
-                className="notification-icon" 
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
+              <div className="notification-icon">
                 <FaBell />
                 {notificationCount > 0 && (
                   <span className="notification-badge">{notificationCount}</span>
                 )}
-              </button>
-              {showNotifications && (
-                <div className="notification-dropdown">
-                  <div className="notification-header">
-                    <h4>Notifications</h4>
-                    <button 
-                      className="mark-all-read"
-                      onClick={() => {/* TODO: Implement mark all as read */}}
-                    >
-                      Mark all as read
-                    </button>
-                  </div>
-                  <div className="notification-list">
-                    {/* TODO: Add notification items */}
-                    <div className="notification-item">
-                      <p>No new notifications</p>
-                    </div>
+              </div>
+              <div className="notification-dropdown">
+                <div className="notification-header">
+                  <h4>Notifications</h4>
+                  <button 
+                    className="mark-all-read"
+                    onClick={() => {/* TODO: Implement mark all as read */}}
+                  >
+                    Mark all as read
+                  </button>
+                </div>
+                <div className="notification-list">
+                  {/* TODO: Add notification items */}
+                  <div className="notification-item">
+                    <p>No new notifications</p>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
             <div className="profile-dropdown">
               <CustomToggle>
