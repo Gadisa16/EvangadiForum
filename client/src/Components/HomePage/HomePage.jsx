@@ -95,6 +95,12 @@ function HomePage() {
     }
   }, [isAuthenticated]);
 
+  const greeting = ["Welcome back", "Hey", "Hy", "greetings", "Hello", "Hi", "Good to see you"];
+  function getGreeting() {
+    const randomGreeting = greeting[Math.floor(Math.random() * greeting.length)];
+    return randomGreeting;
+  }
+
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="homp">
@@ -108,7 +114,7 @@ function HomePage() {
             {isAuthenticated ? (
               <div className="user-welcome">
                 <div className="user-stats">
-                  <h3>Welcome back, {capitalizeName(userProfile.username)}!</h3>
+                  <h3>{getGreeting()}, {capitalizeName(userProfile.username)}!</h3>
                   {userProfile.bio && (
                     <p className="user-bio">{userProfile.bio}</p>
                   )}
