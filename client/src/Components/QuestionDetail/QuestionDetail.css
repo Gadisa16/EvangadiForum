@@ -217,10 +217,12 @@ textarea {
 }
 
 .reply-item {
-  background-color: #f3f2ef;
+  /* background-color: #f3f2ef; */
   border-radius: 8px;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
+  border-bottom: 1px #f3f2ef solid;
+  border-radius: 4%;
 }
 
 .reply-content {
@@ -237,7 +239,9 @@ textarea {
 
 .reply-user-info {
   display: flex;
-  flex-direction: column;
+  width: 92%;
+  justify-content: space-between;
+
 }
 
 .reply-header .user {
@@ -299,9 +303,6 @@ textarea {
 }
 
 .edit-button {
-  position: absolute;
-  top: 0;
-  right: 0;
   padding: 0;
   color: darkblue;
   opacity: 0.6;
@@ -315,17 +316,17 @@ textarea {
   color: #333;
 }
 
-/* Specific styles for answer edit button */
-.answer-text .edit-button {
+/* Specific styles for question edit button */
+.card-text .edit-button {
   position: absolute;
   top: 0;
   right: 0;
 }
 
-/* Specific styles for reply edit button */
+/* Remove absolute positioning for answer and reply edit buttons */
+.answer-text .edit-button,
 .reply-content .edit-button {
   position: static;
-  margin-left: auto;
 }
 
 .card-text:hover .edit-button,

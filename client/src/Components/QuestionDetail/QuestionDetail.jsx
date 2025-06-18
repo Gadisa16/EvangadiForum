@@ -571,14 +571,6 @@ function QuestionDetail() {
                   {answerData.created_at && (
                     <small className="text-muted d-block mt-2 posted_date">Answered on {formatDate(answerData.created_at)}</small>
                   )}
-                  {user.userId === answerData.userid && (
-                    <button
-                      className="btn btn-link edit-button"
-                      onClick={() => handleEditClick('answer', answerData.answerid, answerData.answer)}
-                    >
-                      <i className="fas fa-pencil-alt"></i>
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -604,6 +596,14 @@ function QuestionDetail() {
                     <span className="vote-count">{answerVotes[answerData.answerid]?.votes?.dislikes}</span>
                   )}
                 </button>
+                {user.userId === answerData.userid && (
+                  <button
+                    className="btn btn-link edit-button"
+                    onClick={() => handleEditClick('answer', answerData.answerid, answerData.answer)}
+                  >
+                    <i className="fas fa-pencil-alt"></i>
+                  </button>
+                )}
               </div>
             </div>
           </div>

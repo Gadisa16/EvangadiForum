@@ -222,14 +222,6 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
                       {formatDate(reply.created_at)}
                     </span>
                   </div>
-                  {user.userId === reply.userid && (
-                    <button
-                      className="btn btn-link edit-button"
-                      onClick={() => onEditReply('reply', reply.replyid, reply.reply)}
-                    >
-                      <i className="fas fa-pencil-alt"></i>
-                    </button>
-                  )}
                 </div>
                 <div className="reply-text">
                   {parse(DOMPurify.sanitize(reply.reply))}
@@ -255,6 +247,14 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
                       <span className="vote-count">{reply.dislikes}</span>
                     )}
                   </button>
+                  {user.userId === reply.userid && (
+                    <button
+                      className="btn btn-link edit-button"
+                      onClick={() => onEditReply('reply', reply.replyid, reply.reply)}
+                    >
+                      <i className="fas fa-pencil-alt"></i>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
