@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
-import axios from "../axios";
+import axios from "../../axios";
 import Question from '../Question/Question';
 import "./HomePage.css";
 

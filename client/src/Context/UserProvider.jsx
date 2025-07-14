@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "../Components/axios";
+import axios from "../axios";
 
 export const userProvider = createContext();
 

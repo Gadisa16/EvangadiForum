@@ -4,3 +4,7 @@
         padding: 0 5px;
         width: fit-content;
 }
+
+.ql-snow .ql-editor a {
+        text-decoration-color: blue !important;
+}

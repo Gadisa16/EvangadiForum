@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import AskQuestion from "./Components/AskQuestion/AskQuestion";
 import Footer from "./Components/Footer/Footer";
@@ -10,9 +10,13 @@ import Landing from "./Components/Landing/Landing.jsx";
 import Profile from "./Components/Profile/Profile";
 import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
 import SignUp from "./Components/SignUp/SignUp";
+import { NotificationProvider } from './Context/NotificationContext';
 import PrivateRoute from "./Context/PrivateRoute.jsx";
 import { QuestionProvider } from "./Context/QuestionContext"; // Import QuestionProvider
+import { SocketProvider } from './Context/SocketContext';
 import { userProvider } from "./Context/UserProvider";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AppRoutes() {
   const { isAuthenticated, isLoading } = useContext(userProvider);
@@ -24,6 +28,7 @@ function AppRoutes() {
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-content" style={{minHeight:"100vh", position:"relative"}}>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -64,9 +69,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QuestionProvider> {/* Use QuestionProvider instead of QuestionContext.Provider */}
-      <AppRoutes />
-    </QuestionProvider>
+      <SocketProvider>
+        <NotificationProvider>
+          <QuestionProvider> {/* Use QuestionProvider instead of QuestionContext.Provider */}
+            <AppRoutes />
+          </QuestionProvider>
+        </NotificationProvider>
+      </SocketProvider>
   );
 }
 

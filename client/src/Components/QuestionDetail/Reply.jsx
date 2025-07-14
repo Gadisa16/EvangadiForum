@@ -3,8 +3,9 @@ import parse from 'html-react-parser';
 import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import axios from '../axios';
+import axios from '../../axios';
 import './QuestionDetail.css';
+import { toast } from 'react-toastify';
 
 function Reply({ answerId, replies, setReplies, user, onEditReply, editingContent, onContentUpdate, onCancelEdit }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -95,7 +96,8 @@ function Reply({ answerId, replies, setReplies, user, onEditReply, editingConten
         ...prev,
         [answerId]: updatedReplies
       }));
-      alert('Failed to register vote. Please try again.');
+      // alert('Failed to register vote. Please try again.');
+      toast.error('Failed to register vote. Please try again.')
     }
   };
 

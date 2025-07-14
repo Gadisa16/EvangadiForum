@@ -41,7 +41,7 @@ function SignIn({ toggleForm }) {
           Create a new account
         </Link>
       </p>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ position: "relative" }}>
         <input
           type="text"
           className={errors.email && "invalid"}
@@ -60,34 +60,38 @@ function SignIn({ toggleForm }) {
         {errors.email && (
           <div className="text-danger">{errors.email.message}</div>
         )}
+        
+        <div className="pass_container" style={{ position: "relative" }}>
+          <input
+            type={passwordVisible ? "password" : "text"}
+            className={` hide ${errors.password && "invalid"}`}
+            placeholder=" Your Password"
+            {...register("password", {
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Minimum password length is 8",
+              },
+            })}
+            onKeyUp={() => {
+              trigger("password");
+            }}
+          />
 
-        <input
-          type={passwordVisible ? "password" : "text"}
-          className={` hide ${errors.password && "invalid"}`}
-          placeholder=" Your Password"
-          {...register("password", {
-            required: "Password is required",
-            minLength: {
-              value: 8,
-              message: "Minimum password length is 8",
-            },
-          })}
-          onKeyUp={() => {
-            trigger("password");
-          }}
-        />
+          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "112px", top: "10px" }}>
+            {passwordVisible ? (
+              <i className="fas fa-eye-slash" />
+            ) : (
+              <i className="fas fa-eye" />
+            )}
+          </i>
+
+        </div>
+
         {errors.password && (
           <div className="text-danger">{errors.password.message}</div>
         )}
-
-        <i onClick={togglePasswordVisibility}>
-          {passwordVisible ? (
-            <i className="fas fa-eye-slash" />
-          ) : (
-            <i className="fas fa-eye" />
-          )}
-        </i>
-
+        
         {error && <div className="text-danger">{error}</div>}
 
         <button className="login__signInButton" type="submit">

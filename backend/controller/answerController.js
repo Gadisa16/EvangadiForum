@@ -1,5 +1,6 @@
 const dbconnection = require("../db/dbConfig");
 const { StatusCodes } = require("http-status-codes");
+const NotificationService = require("../services/notificationService");
 
 async function postAnswer(req, res) {
     const { answer, questionid, userid } = req.body;
@@ -15,6 +16,21 @@ async function postAnswer(req, res) {
         "INSERT INTO answers(userid,questionid,answer) VALUES(?,?,?)",
         [userid, questionid, answer]
         );
+
+        // Fetch question owner
+        const [questionRows] = await dbconnection.query(
+          "SELECT userid FROM questions WHERE questionid = ?",
+          [questionid]
+        );
+        if (questionRows.length > 0 && questionRows[0].userid !== userid) {
+          await NotificationService.notifyNewAnswer(
+            questionRows[0].userid, // question owner
+            userid, // answerer
+            questionid,
+            null // answerId (not available here)
+          );
+        }
+
         return res
         .status(StatusCodes.CREATED)
         .json({ msg: "Answer posted successfully" });

@@ -8,9 +8,10 @@ import 'react-quill/dist/quill.snow.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
-import axios from "../axios";
+import axios from "../../axios";
 import "./QuestionDetail.css";
 import Reply from './Reply';
+import { toast } from 'react-toastify';
 
 // Import Quill modules
 
@@ -111,13 +112,15 @@ function QuestionDetail() {
                   const baseUrl = axios.defaults.baseURL.replace('/api', '');
                   const fullImageUrl = `${baseUrl}${response.data.url}`;
                   quill.insertEmbed(range.index, 'image', fullImageUrl);
+                  toast.success('Image uploaded successfully!');
                 } else {
                   console.error('Invalid response format:', response.data);
                 }
               } catch (error) {
                 console.error('Error uploading image:', error);
                 // Show error to user
-                alert('Failed to upload image. Please try again.');
+                // alert('Failed to upload image. Please try again.');
+                toast.error('Failed to upload image. Please try again.');
               }
             }
           };
@@ -203,38 +206,56 @@ function QuestionDetail() {
       );
 
       if (response.data) {
+        toast.success('Your answer has been posted successfully!');
         const ans = await axios.get(`/answers/all-answers/${questionid}`);
         setdbAnswer(ans.data.data);
         setValue("answer", ""); // Clear the editor after posting
       }
     } catch (error) {
       console.error("Error posting answer:", error.response?.data || error);
-      alert("Failed to post answer. Please try again.");
+      // alert("Failed to post answer. Please try again.");
+      toast.error('Failed to post answer. Please try again.');
     }
   }
 
   const handleVote = async (answerId, voteType) => {
     if (!user) {
-      alert('Please login to vote');
+      // alert('Please login to vote');
+      toast.error('Please login to vote');
       return;
     }
-
+  
     try {
       // Optimistically update UI
-      const updatedAnswers = dbAnswer.map(answer => {
-        if (answer.answerid === answerId) {
-          const currentVote = answer.userVote || 0;
-          const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
-          return {
-            ...answer,
-            votes: answer.votes + voteChange,
-            userVote: currentVote === voteType ? 0 : voteType
-          };
-        }
-        return answer;
-      });
-      setdbAnswer(updatedAnswers);
-
+      setdbAnswer(prevAnswers =>
+        prevAnswers.map(answer => {
+          if (answer.answerid === answerId) {
+            const currentVote = answer.userVote || 0;
+            const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
+            return {
+              ...answer,
+              votes: answer.votes + voteChange,
+              userVote: currentVote === voteType ? 0 : voteType,
+            };
+          }
+          return answer;
+        })
+      );
+  
+      // Update answerVotes state optimistically
+      setAnswerVotes(prevVotes => ({
+        ...prevVotes,
+        [answerId]: {
+          ...prevVotes[answerId],
+          votes: {
+            ...prevVotes[answerId]?.votes,
+            likes: voteType === 'like' ? (prevVotes[answerId]?.votes?.likes || 0) + 1 : prevVotes[answerId]?.votes?.likes || 0,
+            dislikes: voteType === 'dislike' ? (prevVotes[answerId]?.votes?.dislikes || 0) + 1 : prevVotes[answerId]?.votes?.dislikes || 0,
+          },
+          userVote: voteType,
+        },
+      }));
+  
       // Make API call
       const response = await axios.post(
         `/answers/${answerId}/vote`,
@@ -245,36 +266,58 @@ function QuestionDetail() {
           },
         }
       );
-
+  
       if (response.data) {
         // Update with server response
-        const updatedAnswers = dbAnswer.map(answer => {
-          if (answer.answerid === answerId) {
-            return {
-              ...answer,
-              votes: response.data.votes,
-              userVote: response.data.userVote
-            };
-          }
-          return answer;
-        });
-        setdbAnswer(updatedAnswers);
+        setdbAnswer(prevAnswers =>
+          prevAnswers.map(answer =>
+            answer.answerid === answerId
+              ? {
+                  ...answer,
+                  votes: response.data.votes,
+                  userVote: response.data.userVote,
+                }
+              : answer
+          )
+        );
+  
+        // Update answerVotes with server response
+        setAnswerVotes(prevVotes => ({
+          ...prevVotes,
+          [answerId]: {
+            votes: response.data.votes,
+            userVote: response.data.userVote,
+          },
+        }));
       }
     } catch (error) {
       console.error('Error voting:', error);
+      toast.error('Failed to register vote. Please try again.');
       // Revert optimistic update
-      const updatedAnswers = dbAnswer.map(answer => {
-        if (answer.answerid === answerId) {
-          return {
-            ...answer,
-            votes: answer.votes,
-            userVote: answer.userVote
-          };
-        }
-        return answer;
-      });
-      setdbAnswer(updatedAnswers);
-      alert('Failed to register vote. Please try again.');
+      setdbAnswer(prevAnswers =>
+        prevAnswers.map(answer =>
+          answer.answerid === answerId
+            ? {
+                ...answer,
+                votes: answer.votes, // Revert to original votes
+                userVote: answer.userVote, // Revert to original userVote
+              }
+            : answer
+        )
+      );
+  
+      // Revert answerVotes
+      setAnswerVotes(prevVotes => ({
+        ...prevVotes,
+        [answerId]: {
+          ...prevVotes[answerId],
+          votes: prevVotes[answerId]?.votes, // Revert to original votes
+          userVote: prevVotes[answerId]?.userVote, // Revert to original userVote
+        },
+      }));
+  
+      // alert('Failed to register vote. Please try again.');
+      toast.error('Failed to register vote. Please try again.');
     }
   };
 
@@ -385,19 +428,23 @@ function QuestionDetail() {
     try {
       let endpoint = '';
       let data = {};
+      console.log("editingContent", editingContent);
 
       switch (editingContent.type) {
         case 'question':
-          endpoint = `/questions/${questionid}`;
+          endpoint = `/questions/${editingContent.id}`;
           data = { description: updatedContent };
           break;
         case 'answer':
           endpoint = `/answers/${editingContent.id}`;
           data = { answer: updatedContent };
+          console.log("answer content",data);
           break;
         case 'reply':
           endpoint = `/replies/${editingContent.id}`;
+          console.log("reply content",endpoint);
           data = { reply: updatedContent };
+          console.log("data", data)
           break;
         default:
           return;
@@ -427,23 +474,26 @@ function QuestionDetail() {
           setdbAnswer(updatedAnswers);
         } else if (editingContent.type === 'reply') {
           // Refresh replies
-          const updatedReplies = replies[editingContent.id].map(r =>
+          const currentReplies = replies[editingContent.id] || [];
+          const updatedReplies = currentReplies.map(r =>
             r.replyid === editingContent.id
               ? { ...r, reply: updatedContent }
               : r
           );
+          console.log("updated reply",updatedReplies);
           setReplies(prev => ({
             ...prev,
             [editingContent.id]: updatedReplies
           }));
         }
-
+        toast.success('Content updated successfully!');
         // Clear editing state
         setEditingContent({ type: null, id: null, content: null });
       }
     } catch (error) {
       console.error('Error updating content:', error);
-      alert('Failed to update content. Please try again.');
+      // alert('Failed to update content. Please try again.');
+      toast.error('Failed to update content. Please try again.');
     }
   };
 

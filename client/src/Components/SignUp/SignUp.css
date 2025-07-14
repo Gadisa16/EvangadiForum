@@ -1,6 +1,6 @@
 .first-name {
     width: 35% !important;
-    margin-right: 45px !important;
+    margin-right: 10% !important;
 }
 
 .last-name {
@@ -13,6 +13,6 @@
     background: #fce9ef !important;
 }
 
-.hide {
+/* .hide {
     margin-right: -25px;
-}
+} */

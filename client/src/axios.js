@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const instance = axios.create({
   baseURL: 'http://localhost:3000/api',
@@ -27,10 +28,11 @@ instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/register';
+      // window.location.href = '/register';
+      useNavigate('/register')
     }
     return Promise.reject(error);
   }
 );
 
-export default instance; 
+export default instance;

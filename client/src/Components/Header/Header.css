@@ -21,15 +21,12 @@
 }
 
 .navbar {
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    padding: 1rem 2rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-logo {
@@ -40,21 +37,21 @@
 .nav-brand a {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #007bff;
+    color: #333;
     text-decoration: none;
 }
 
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .nav-links a {
-    color: #333;
+    color: #666;
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s;
+    transition: color 0.3s ease;
 }
 
 .nav-links a:hover {
@@ -63,24 +60,27 @@
 
 .profile-dropdown {
     position: relative;
-}
-
-.profile-icon-container {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+    height: 70px;
+    margin-bottom: -20px;
 }
 
 .profile-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    cursor: pointer;
+    width: 55px;
+    height: 55px;
+    /* border-radius: 50%; */
+    overflow: hidden;
 }
 
 .profile-picture {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.profile-picture:hover {
+    scale: 1.05;
+    transition: scale 0.3s ease;
 }
 
 .default-icon {
@@ -93,16 +93,11 @@
     top: 80%;
     right: 0;
     background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 0;
-    min-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
     margin-top: 0.5rem;
-    display: none;
-}
-
-.profile-dropdown:hover .dropdown-menu {
-    display: block;
+    min-width: 200px;
 }
 
 .dropdown-item {
@@ -112,24 +107,26 @@
     padding: 0.75rem 1rem;
     color: #333;
     text-decoration: none;
-    transition: background-color 0.2s;
-    width: 100%;
-    text-align: left;
-    border: none;
-    background: none;
-    font-size: 1rem;
-    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .dropdown-item:hover {
     background-color: #f8f9fa;
-    color: #007bff;
 }
 
 .dropdown-divider {
     height: 1px;
-    background-color: #e9ecef;
+    background-color: #eee;
     margin: 0.5rem 0;
+}
+
+button.dropdown-item {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
 }
 
 @media (max-width: 1000px) {
@@ -188,20 +185,20 @@
 
 .notification-container {
     position: relative;
-    margin-right: 20px;
+    height: 60px;
+    margin-bottom: -20px;
 }
 
 .notification-icon {
-    color: #ff4444;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 8px;
     position: relative;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #666;
     transition: color 0.3s ease;
 }
 
 .notification-icon:hover {
-    color: #ff0000;
+    color: #007bff;
 }
 
 .notification-badge {
@@ -211,43 +208,30 @@
     background-color: #ff4444;
     color: white;
     border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 1.2rem;
+    text-align: center;
 }
 
 .notification-dropdown {
     position: absolute;
-    top: 100%;
+    top: 80%;
     right: 0;
     width: 300px;
-    background: white;
+    background-color: white;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
-    margin-top: 10px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-}
-
-.notification-container:hover .notification-dropdown {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+    margin-top: 0.5rem;
 }
 
 .notification-header {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
 }
 
 .notification-header h4 {
@@ -260,7 +244,7 @@
     border: none;
     color: #007bff;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     padding: 0;
 }
 
@@ -269,22 +253,31 @@
 }
 
 .notification-list {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
 .notification-item {
-    padding: 12px 15px;
+    padding: 1rem;
     border-bottom: 1px solid #eee;
-    transition: background-color 0.2s ease;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .notification-item:hover {
     background-color: #f8f9fa;
 }
 
-.notification-item p {
-    margin: 0;
+.notification-item.unread {
+    background-color: #f0f7ff;
+}
+
+.notification-content p {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.notification-content small {
     color: #666;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
 }

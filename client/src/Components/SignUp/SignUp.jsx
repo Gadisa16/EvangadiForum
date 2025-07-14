@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./SignUp.css";
-import axios from "../axios.js";
+import axios from "../../axios.js";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -111,28 +111,30 @@ function SignUp({ toggleForm }) {
             <small className="text-danger">{errors.password.message}</small>
           </div>
         )}
-        <input
-          type={passwordVisible ? "password" : "text"}
-          className={`hide ${errors.password && "invalid"}`}
-          placeholder=" Your Password *"
-          {...register("password", {
-            required: "Password is required",
-            minLength: {
-              value: 8,
-              message: "Minimum password length is 8",
-            },
-          })}
-          onKeyUp={() => {
-            trigger("password");
-          }}
-        />
-        <i onClick={togglePasswordVisibility}>
-          {passwordVisible ? (
-            <i className="fas fa-eye-slash" />
-          ) : (
-            <i className="fas fa-eye" />
-          )}
-        </i>
+        <div className="pass_container" style={{ position: "relative" }}>
+          <input
+            type={passwordVisible ? "password" : "text"}
+            className={`hide ${errors.password && "invalid"}`}
+            placeholder=" Your Password *"
+            {...register("password", {
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Minimum password length is 8",
+              },
+            })}
+            onKeyUp={() => {
+              trigger("password");
+            }}
+          />
+          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "112px", top: "10px" }}>
+            {passwordVisible ? (
+              <i className="fas fa-eye-slash" />
+            ) : (
+              <i className="fas fa-eye" />
+            )}
+          </i>
+        </div>
 
         {errors.username && (
           <div>

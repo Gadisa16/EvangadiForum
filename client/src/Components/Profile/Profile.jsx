@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../../axios";
 import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import "./Profile.css";
+import { toast } from "react-toastify";
 
 const Profile = () => {
   const [profile, setProfile] = useState({
@@ -15,8 +16,8 @@ const Profile = () => {
   });
   const [previewUrl, setPreviewUrl] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  // const [error, setError] = useState(null);
+  // const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,7 +43,8 @@ const Profile = () => {
       setPreviewUrl(userData.profilePicture || null);
       setLoading(false);
     } catch (err) {
-      setError("Failed to load profile");
+      // setError("Failed to load profile");
+      toast.error("Failed to load profile");
       setLoading(false);
     }
   };
@@ -60,14 +62,16 @@ const Profile = () => {
     if (file) {
       // Check file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        setError("File size should be less than 5MB");
+        // setError("File size should be less than 5MB");
+        toast.error("File size should be less than 5MB");
         return;
       }
 
       // Check file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(file.type)) {
-        setError("Only JPG, PNG and GIF files are allowed");
+        // setError("Only JPG, PNG and GIF files are allowed");
+        toast.error("Only JPG, PNG and GIF files are allowed");
         return;
       }
 
@@ -87,8 +91,8 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    // setError(null);
+    // setSuccess(null);
 
     try {
       const formData = new FormData();
@@ -106,13 +110,15 @@ const Profile = () => {
         },
       });
 
-      setSuccess("Profile updated successfully");
+      // setSuccess("Profile updated successfully");
+      toast.success("Profile updated successfully");
       setProfile(response.data.user);
       if (response.data.user.profilePicture) {
         setPreviewUrl(response.data.user.profilePicture);
       }
     } catch (err) {
-      setError(err.response?.data?.msg || "Failed to update profile");
+      // setError(err.response?.data?.msg || "Failed to update profile");
+      toast.error(err.response?.data?.msg || "Failed to update profile");
     }
   };
 
@@ -127,8 +133,8 @@ const Profile = () => {
   return (
     <div className="profile-container">
       <h2>Profile Settings</h2>
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {/* {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>} */}
       <form onSubmit={handleSubmit} className="profile-form">
         <div className="profile-picture-section" onClick={handleProfilePictureClick}>
           <ProfilePicture profilePicture={previewUrl} size="xlarge" />

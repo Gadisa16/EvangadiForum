@@ -4,7 +4,39 @@ require("dotenv").config()
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const { Server } = require('socket.io');
+const http = require('http');
 const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  // Join user's personal room
+  socket.on('join', (userId) => {
+    socket.join(`user_${userId}`);
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+// Make io accessible to other modules
+app.set('io', io);
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -55,6 +87,7 @@ const userRoutes = require('./routes/userRoutes');
 const questionRoute = require('./routes/questionRoutes');
 const answerRoute = require('./routes/answerRoutes');
 const replyRoute = require('./routes/replyRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 //json middleware to extract to json data
 app.use(express.json());
@@ -68,6 +101,8 @@ app.use("/api/questions", questionRoute)
 app.use("/api/answers", answerRoute)
 //reply route middleware
 app.use("/api/replies", replyRoute)
+//notification route middleware
+app.use("/api/notifications", notificationRoutes)
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -81,7 +116,7 @@ const port = process.env.PORT || 3000;
 async function start(){
     try {
         const result = await dbConnection.execute("select 'test'")
-        await app.listen(port)
+        await server.listen(port)
         console.log("database connection established")
         console.log(`listening on ${port}`)
     } catch (error) {

@@ -1,10 +1,12 @@
 const dbconnection = require("../db/dbConfig");
 const { StatusCodes } = require("http-status-codes");
+const NotificationService = require("../services/notificationService");
 
 async function postReply(req, res) {
     const { reply, answerid, userid } = req.body;
 
     if (!reply || !answerid || !userid) {
+        console.log("Missing required fields:", { reply, answerid, userid });
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json({ msg: "Please provide all required values." });
@@ -32,6 +34,19 @@ async function postReply(req, res) {
             WHERE r.replyid = ?`,
             [result.insertId]
         );
+
+        // Fetch answer owner
+        const [answerRows] = await dbconnection.query(
+            "SELECT userid, questionid FROM answers WHERE answerid = ?",
+            [answerid]
+        );
+        if (answerRows.length > 0 && answerRows[0].userid !== userid) {
+            await NotificationService.notifyNewComment(
+                answerRows[0].userid, // answer owner
+                userid, // replier
+                answerid // referenceId
+            );
+        }
 
         return res
             .status(StatusCodes.CREATED)
@@ -142,6 +157,19 @@ async function handleReplyVote(req, res) {
             [replyId, userId]
         );
 
+        // Fetch reply owner
+        const [replyRows] = await dbconnection.query(
+            "SELECT userid FROM replies WHERE replyid = ?",
+            [replyId]
+        );
+        if (replyRows.length > 0 && replyRows[0].userid !== userId) {
+            await NotificationService.notifyUpvote(
+                replyRows[0].userid, // reply owner
+                userId, // voter
+                replyId // referenceId
+            );
+        }
+
         return res.json({
             votes: votes[0],
             userVote: userVote[0]?.vote_type || null
@@ -155,14 +183,14 @@ async function handleReplyVote(req, res) {
 async function updateReply(req, res) {
     const { replyid } = req.params;
     const { reply } = req.body;
-    
+    console.log(replyid, reply);
     if (!reply) {
         return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide the updated content" });
     }
 
     try {
         await dbconnection.query(
-            "UPDATE replies SET reply = ? WHERE replyid = ?",
+            "UPDATE replies SET reply_text = ? WHERE replyid = ?",
             [reply, replyid]
         );
         

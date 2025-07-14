@@ -1,4 +1,5 @@
 const dbConnection = require('../db/dbConfig');
+const NotificationService = require('../services/notificationService');
 
 // Vote on an answer
 const voteAnswer = async (req, res) => {
@@ -44,6 +45,19 @@ const voteAnswer = async (req, res) => {
             WHERE answer_id = ?`,
             [answerId]
         );
+
+        // Notify answer owner
+        const [answerRows] = await dbConnection.execute(
+            'SELECT userid FROM answers WHERE answerid = ?',
+            [answerId]
+        );
+        if (answerRows.length > 0 && answerRows[0].userid !== userId) {
+            await NotificationService.notifyUpvote(
+                answerRows[0].userid, // answer owner
+                userId, // voter
+                answerId // referenceId
+            );
+        }
 
         res.status(200).json({
             message: 'Vote recorded successfully',

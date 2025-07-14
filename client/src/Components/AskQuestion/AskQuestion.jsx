@@ -5,8 +5,9 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { v4 as uuidv4 } from 'uuid';
 import { userProvider } from '../../Context/UserProvider';
-import axios from "../axios";
+import axios from "../../axios";
 import "./AskQuestion.css";
+import { toast } from 'react-toastify';
 
 function AskQuestion() {
   const {
@@ -69,7 +70,8 @@ function AskQuestion() {
               } catch (error) {
                 console.error('Error uploading image:', error);
                 // Show error to user
-                alert('Failed to upload image. Please try again.');
+                // alert('Failed to upload image. Please try again.');
+                toast.error('Failed to upload image. Please try again.');
               }
             }
           };
@@ -133,7 +135,7 @@ function AskQuestion() {
           <div className="d-flex flex-column align-items-center mb-4">
             <textarea
               placeholder="Tag"
-              className={`w-75 ${errors.tag ? "invalid" : ""}`}
+              className={`w-75 tag-area pt-2 ps-2 ${errors.tag ? "invalid" : ""}`}
               rows="2"
               {...register("tag", {
                 required: "Tag is required.",
@@ -148,7 +150,7 @@ function AskQuestion() {
           </div>
           <div className="d-flex flex-column align-items-center mb-4">
             <textarea
-              className={`w-75 ${errors.title ? "invalid" : ""}`}
+              className={`w-75 pt-2 ps-2 ${errors.title ? "invalid" : ""}`}
               rows="2"
               placeholder="Title"
               {...register("title", {
