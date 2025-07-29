@@ -30,10 +30,10 @@ Responsive Design: Fully responsive UI for desktop and mobile devices.
 # Installation
 1. Clone the repository:
     ```git clone https://github.com/Gadisa16/EvangadiForum.git```
-    `cd EvangadiForum`
+    ```cd EvangadiForum```
 2. Install backend dependencies:
-    cd backend
-    npm install
+    ```cd backend```
+    ```npm install```
 3. Install frontend dependencies:
-    cd ../client
-    npm install
+    ```cd ../client```
+    ```npm install```
