@@ -27,13 +27,22 @@ Responsive Design: Fully responsive UI for desktop and mobile devices.
 - npm or yarn
 - (Database server, if required)
 
-# Installation
-1. Clone the repository:
-    ```git clone https://github.com/Gadisa16/EvangadiForum.git```
-    ```cd EvangadiForum```
-2. Install backend dependencies:
-    ```cd backend```
-    ```npm install```
-3. Install frontend dependencies:
-    ```cd ../client```
-    ```npm install```
+## Installation
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/Gadisa16/EvangadiForum.git
+    cd EvangadiForum
+    ```
+2.  **Install backend dependencies:**
+
+    ```bash
+    cd backend
+    npm install
+    ```
+3.  **Install frontend dependencies:**
+
+    ```bash
+    cd client
+    npm install
+    ```
