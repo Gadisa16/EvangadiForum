@@ -20,7 +20,7 @@
     padding-bottom: 20px;
 }
 
-.login__container>form>input {
+.login__container>form>input, .pass_container>input {
     height: 45px;
     margin-bottom: 10px;
     background-color: white;
@@ -74,6 +74,6 @@
     background: #fce9ef !important;
 }
 
-.hide {
+/* .hide {
     margin-right: -25px;
-}
+} */

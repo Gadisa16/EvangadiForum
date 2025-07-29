@@ -1,0 +1,185 @@
+.profile-container {
+  max-width: 70%;
+  margin: 1rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-picture-section {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 2rem;
+  cursor: pointer;
+}
+
+.profile-picture-section:hover .profile-picture-overlay {
+  opacity: 1;
+}
+
+.profile-picture-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-picture-overlay img {
+  width: 32px;
+  height: 32px;
+  filter: brightness(0) invert(1);
+}
+
+.profile-picture-section input[type="file"] {
+  display: none;
+}
+
+.profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 3rem;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.5;
+}
+
+/* Username field */
+.form-group:nth-of-type(2)::before {
+  background-image: url('/icon_person.png');
+}
+
+/* Email field */
+.form-group:nth-of-type(3)::before {
+  background-image: url('/icon_email.png');
+}
+
+/* First name field */
+.form-group:nth-of-type(4)::before {
+  background-image: url('/icon_person.png');
+}
+
+/* Last name field */
+.form-group:nth-of-type(5)::before {
+  background-image: url('/icon_person.png');
+}
+
+/* Bio field */
+.form-group:nth-of-type(6)::before {
+  background-image: url('/icon_bio.png');
+}
+
+.disabled-input {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.update-button {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.update-button:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+    max-width: 90%;
+  }
+
+  .profile-picture {
+    width: 120px;
+    height: 120px;
+  }
+} 

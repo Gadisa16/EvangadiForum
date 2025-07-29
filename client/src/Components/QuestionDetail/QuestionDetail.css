@@ -1,5 +1,5 @@
 .top {
-    margin-top: 84px;
+    margin-top: 2vw;
 }
 
 .h65 {
@@ -217,10 +217,12 @@ textarea {
 }
 
 .reply-item {
-  background-color: #f3f2ef;
+  /* background-color: #f3f2ef; */
   border-radius: 8px;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
+  border-bottom: 1px #f3f2ef solid;
+  border-radius: 4%;
 }
 
 .reply-content {
@@ -237,7 +239,9 @@ textarea {
 
 .reply-user-info {
   display: flex;
-  flex-direction: column;
+  width: 92%;
+  justify-content: space-between;
+
 }
 
 .reply-header .user {
@@ -296,4 +300,216 @@ textarea {
 
 .reply-vote-button .vote-count {
   font-size: 0.75rem;
+}
+
+.edit-button {
+  padding: 0;
+  color: darkblue;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  width: 30px;
+  height: 30px;
+  background-color: #e9f2f5 !important;
+}
+
+.edit-button:hover {
+  color: #333;
+}
+
+/* Specific styles for question edit button */
+.card-text .edit-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* Remove absolute positioning for answer and reply edit buttons */
+.answer-text .edit-button,
+.reply-content .edit-button {
+  position: static;
+}
+
+.card-text:hover .edit-button,
+.answer-text:hover .edit-button,
+.reply-text:hover .edit-button {
+    opacity: 0.7;
+}
+
+.card-text,
+.answer-text,
+.reply-text {
+    position: relative;
+}
+
+.rich-text-editor {
+    margin: 20px auto;
+    max-width: 100%;
+}
+
+.rich-text-editor .ql-container {
+    min-height: 200px;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    background: #fefcfc;
+}
+
+.rich-text-editor .ql-toolbar {
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+    background: #f8f8f8;
+    border-color: #ccc;
+}
+
+.rich-text-editor .ql-editor {
+    min-height: 200px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.rich-text-editor .ql-editor p {
+    margin-bottom: 1em;
+}
+
+.rich-text-editor .ql-editor pre {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+.rich-text-editor .ql-editor code {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+.rich-text-editor .ql-editor blockquote {
+    border-left: 4px solid #ccc;
+    margin: 0;
+    padding-left: 16px;
+    color: #666;
+}
+
+/* Styles for rendered rich text content */
+.answer-text {
+    font-size: 16px;
+    line-height: 1.6;
+    padding-right: 24px;
+}
+
+.answer-text p {
+    margin-bottom: 1em;
+}
+
+.answer-text pre {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+.answer-text code {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-family: monospace;
+}
+
+.answer-text blockquote {
+    border-left: 4px solid #ccc;
+    margin: 1em 0;
+    padding-left: 16px;
+    color: #666;
+}
+
+.answer-text img {
+    max-width: 100%;
+    height: 200px;
+    display: block;
+    margin: 1rem 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.answer-text img:hover {
+    transform: scale(1.02);
+}
+
+.answer-text ul, .answer-text ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.answer-text li {
+    margin-bottom: 0.5em;
+}
+
+.answer-text h1, .answer-text h2, .answer-text h3,
+.answer-text h4, .answer-text h5, .answer-text h6 {
+    margin: 1em 0 0.5em;
+    line-height: 1.3;
+}
+
+.answer-text a {
+    color: #0366d6;
+    text-decoration: none;
+}
+
+.answer-text a:hover {
+    text-decoration: underline;
+}
+
+.card-text img {
+    max-width: 100%;
+    height: 200px;
+    display: block;
+    margin: 1rem 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.card-text img:hover {
+    transform: scale(1.02);
+}
+
+.rich-text-editor .ql-editor img {
+    max-width: 100%;
+    height: 160px;
+    display: block;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-modal.show {
+    display: flex;
+}
+
+.image-modal-content {
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
 }

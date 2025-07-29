@@ -1,0 +1,33 @@
+.profile-picture {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.profile-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.profile-picture.small {
+  width: 32px;
+  height: 32px;
+}
+
+.profile-picture.medium {
+  width: 48px;
+  height: 48px;
+}
+
+.profile-picture.large {
+  width: 64px;
+  height: 64px;
+}
+
+.profile-picture.xlarge {
+  width: 128px;
+  height: 128px;
+} 

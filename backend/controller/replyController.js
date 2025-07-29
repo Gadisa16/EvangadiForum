@@ -1,10 +1,12 @@
 const dbconnection = require("../db/dbConfig");
 const { StatusCodes } = require("http-status-codes");
+const NotificationService = require("../services/notificationService");
 
 async function postReply(req, res) {
-    const { reply_text, answerid, userid } = req.body;
+    const { reply, answerid, userid } = req.body;
 
-    if (!reply_text || !answerid || !userid) {
+    if (!reply || !answerid || !userid) {
+        console.log("Missing required fields:", { reply, answerid, userid });
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json({ msg: "Please provide all required values." });
@@ -13,13 +15,44 @@ async function postReply(req, res) {
     try {
         const [result] = await dbconnection.query(
             "INSERT INTO replies(userid, answerid, reply_text) VALUES(?,?,?)",
-            [userid, answerid, reply_text]
+            [userid, answerid, reply]
         );
+
+        // Fetch the newly created reply with user info
+        const [newReply] = await dbconnection.query(
+            `SELECT 
+                r.replyid,
+                r.reply_text as reply,
+                r.created_at,
+                u.username,
+                u.userid,
+                0 as likes,
+                0 as dislikes,
+                null as user_vote
+            FROM replies r
+            INNER JOIN users u ON r.userid = u.userid
+            WHERE r.replyid = ?`,
+            [result.insertId]
+        );
+
+        // Fetch answer owner
+        const [answerRows] = await dbconnection.query(
+            "SELECT userid, questionid FROM answers WHERE answerid = ?",
+            [answerid]
+        );
+        if (answerRows.length > 0 && answerRows[0].userid !== userid) {
+            await NotificationService.notifyNewComment(
+                answerRows[0].userid, // answer owner
+                userid, // replier
+                answerid // referenceId
+            );
+        }
+
         return res
             .status(StatusCodes.CREATED)
             .json({ 
                 msg: "Reply posted successfully",
-                replyId: result.insertId 
+                data: newReply[0]
             });
     } catch (error) {
         console.log("reply posted error:", error);
@@ -40,10 +73,10 @@ async function getReplies(req, res) {
     }
 
     try {
-        const response = await dbconnection.query(
+        const [response] = await dbconnection.query(
             `SELECT 
                 r.replyid,
-                r.reply_text,
+                r.reply_text as reply,
                 r.created_at,
                 u.username,
                 u.userid,
@@ -58,7 +91,7 @@ async function getReplies(req, res) {
             ORDER BY r.created_at ASC`,
             [userId || null, answerId]
         );
-        return res.status(StatusCodes.OK).json({ data: response[0] });
+        return res.status(StatusCodes.OK).json({ data: response });
     } catch (error) {
         console.log("Error fetching replies:", error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Error fetching replies" });
@@ -88,7 +121,11 @@ async function handleReplyVote(req, res) {
                     "DELETE FROM reply_votes WHERE reply_id = ? AND user_id = ?",
                     [replyId, userId]
                 );
-                return res.json({ message: "Vote removed" });
+                return res.json({ 
+                    message: "Vote removed",
+                    votes: { likes: 0, dislikes: 0 },
+                    userVote: null
+                });
             } else {
                 // Update vote if changing vote type
                 await dbconnection.query(
@@ -120,6 +157,19 @@ async function handleReplyVote(req, res) {
             [replyId, userId]
         );
 
+        // Fetch reply owner
+        const [replyRows] = await dbconnection.query(
+            "SELECT userid FROM replies WHERE replyid = ?",
+            [replyId]
+        );
+        if (replyRows.length > 0 && replyRows[0].userid !== userId) {
+            await NotificationService.notifyUpvote(
+                replyRows[0].userid, // reply owner
+                userId, // voter
+                replyId // referenceId
+            );
+        }
+
         return res.json({
             votes: votes[0],
             userVote: userVote[0]?.vote_type || null
@@ -130,4 +180,25 @@ async function handleReplyVote(req, res) {
     }
 }
 
-module.exports = { postReply, getReplies, handleReplyVote }; 
+async function updateReply(req, res) {
+    const { replyid } = req.params;
+    const { reply } = req.body;
+    console.log(replyid, reply);
+    if (!reply) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide the updated content" });
+    }
+
+    try {
+        await dbconnection.query(
+            "UPDATE replies SET reply_text = ? WHERE replyid = ?",
+            [reply, replyid]
+        );
+        
+        return res.status(StatusCodes.OK).json({ msg: "Reply updated successfully" });
+    } catch (error) {
+        console.error('Error updating reply:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Something went wrong, try again later" });
+    }
+}
+
+module.exports = { postReply, getReplies, handleReplyVote, updateReply }; 

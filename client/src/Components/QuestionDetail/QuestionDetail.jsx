@@ -1,11 +1,34 @@
-import React, { useContext, useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
+import 'quill-emoji/dist/quill-emoji.css';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from "react-hook-form";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
-import axios from "../axios";
+import axios from "../../axios";
 import "./QuestionDetail.css";
 import Reply from './Reply';
+import { toast } from 'react-toastify';
+
+// Import Quill modules
+
+// Configure DOMPurify to allow images
+DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+  if (node.tagName === 'IMG') {
+    node.setAttribute('style', 'max-width: 100%; height: 200px;');
+  }
+});
+
+// Function to convert relative image URLs to absolute URLs
+const convertImageUrls = (html) => {
+  if (!html) return '';
+  // Get the base URL without the /api suffix
+  const baseUrl = axios.defaults.baseURL.replace('/api', '');
+  return html.replace(/src="\/uploads\//g, `src="${baseUrl}/uploads/`);
+};
 
 function QuestionDetail() {
   const {
@@ -14,16 +37,107 @@ function QuestionDetail() {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm();
 
   const navigate = useNavigate();
   const { user, isAuthenticated } = useContext(userProvider);
-  const { questions } = useContext(QuestionContext);
+  const { questions, setQuestions } = useContext(QuestionContext);
   const { questionid } = useParams();
   const [dbAnswer, setdbAnswer] = useState([]);
   const [answerVotes, setAnswerVotes] = useState({});
   const [replies, setReplies] = useState({});
-  
+  const [questionData, setQuestionData] = useState(null);
+  const quillRef = useRef(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [editingContent, setEditingContent] = useState({
+    type: null, // 'question', 'answer', or 'reply'
+    id: null,
+    content: null
+  });
+
+  // Fetch question data when component mounts
+  useEffect(() => {
+    async function fetchQuestion() {
+      try {
+        const response = await axios.get(`/questions/${questionid}`);
+        setQuestionData(response.data.data);
+      } catch (error) {
+        console.error('Error fetching question:', error);
+      }
+    }
+
+    if (questionid) {
+      fetchQuestion();
+    }
+  }, [questionid]);
+
+  // Configure Quill modules
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        ['blockquote', 'code-block'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['link', 'image'],
+        ['clean']
+      ],
+      handlers: {
+        image: function() {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (file) {
+              const formData = new FormData();
+              formData.append('image', file);
+
+              try {
+                const response = await axios.post('/upload-image', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
+                  }
+                });
+
+                if (response.data && response.data.url) {
+                  const quill = this.quill;
+                  const range = quill.getSelection(true);
+                  // Get the base URL without the /api suffix
+                  const baseUrl = axios.defaults.baseURL.replace('/api', '');
+                  const fullImageUrl = `${baseUrl}${response.data.url}`;
+                  quill.insertEmbed(range.index, 'image', fullImageUrl);
+                  toast.success('Image uploaded successfully!');
+                } else {
+                  console.error('Invalid response format:', response.data);
+                }
+              } catch (error) {
+                console.error('Error uploading image:', error);
+                // Show error to user
+                // alert('Failed to upload image. Please try again.');
+                toast.error('Failed to upload image. Please try again.');
+              }
+            }
+          };
+        }
+      }
+    }
+  }), []);
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'blockquote', 'code-block',
+    'list', 'bullet',
+    'color', 'background',
+    'link', 'image'
+  ];
+
   useEffect(() => {
     async function getAns() {
       try {
@@ -67,10 +181,6 @@ function QuestionDetail() {
     }
   }, [questionid, isAuthenticated]);
 
-  const selectedQuestion = questions.find(
-    (ques) => ques.questionid === questionid
-  );
-
   async function handleClick(data) {
     if (!isAuthenticated) {
       navigate("/register", { state: { from: { pathname: `/question/${questionid}` } } });
@@ -78,10 +188,13 @@ function QuestionDetail() {
     }
 
     try {
-      await axios.post(
+      // Sanitize HTML content
+      const sanitizedAnswer = DOMPurify.sanitize(data.answer);
+      
+      const response = await axios.post(
         "/answers/postanswers",
         {
-          answer: data.answer,
+          answer: sanitizedAnswer,
           questionid: questionid,
           userid: user.userId,
         },
@@ -92,88 +205,368 @@ function QuestionDetail() {
         }
       );
 
-      const ans = await axios.get(`/answers/all-answers/${questionid}`);
-      setdbAnswer(ans.data.data);
-      setValue("answer", ""); // Clear the textarea after posting
+      if (response.data) {
+        toast.success('Your answer has been posted successfully!');
+        const ans = await axios.get(`/answers/all-answers/${questionid}`);
+        setdbAnswer(ans.data.data);
+        setValue("answer", ""); // Clear the editor after posting
+      }
     } catch (error) {
-      console.log(error);
+      console.error("Error posting answer:", error.response?.data || error);
+      // alert("Failed to post answer. Please try again.");
+      toast.error('Failed to post answer. Please try again.');
     }
   }
 
   const handleVote = async (answerId, voteType) => {
-    if (!isAuthenticated) {
-      navigate("/register", { state: { from: { pathname: `/question/${answerId}` } } });
+    if (!user) {
+      // alert('Please login to vote');
+      toast.error('Please login to vote');
+      return;
+    }
+  
+    try {
+      // Optimistically update UI
+      setdbAnswer(prevAnswers =>
+        prevAnswers.map(answer => {
+          if (answer.answerid === answerId) {
+            const currentVote = answer.userVote || 0;
+            const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
+            return {
+              ...answer,
+              votes: answer.votes + voteChange,
+              userVote: currentVote === voteType ? 0 : voteType,
+            };
+          }
+          return answer;
+        })
+      );
+  
+      // Update answerVotes state optimistically
+      setAnswerVotes(prevVotes => ({
+        ...prevVotes,
+        [answerId]: {
+          ...prevVotes[answerId],
+          votes: {
+            ...prevVotes[answerId]?.votes,
+            likes: voteType === 'like' ? (prevVotes[answerId]?.votes?.likes || 0) + 1 : prevVotes[answerId]?.votes?.likes || 0,
+            dislikes: voteType === 'dislike' ? (prevVotes[answerId]?.votes?.dislikes || 0) + 1 : prevVotes[answerId]?.votes?.dislikes || 0,
+          },
+          userVote: voteType,
+        },
+      }));
+  
+      // Make API call
+      const response = await axios.post(
+        `/answers/${answerId}/vote`,
+        { voteType },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+  
+      if (response.data) {
+        // Update with server response
+        setdbAnswer(prevAnswers =>
+          prevAnswers.map(answer =>
+            answer.answerid === answerId
+              ? {
+                  ...answer,
+                  votes: response.data.votes,
+                  userVote: response.data.userVote,
+                }
+              : answer
+          )
+        );
+  
+        // Update answerVotes with server response
+        setAnswerVotes(prevVotes => ({
+          ...prevVotes,
+          [answerId]: {
+            votes: response.data.votes,
+            userVote: response.data.userVote,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      toast.error('Failed to register vote. Please try again.');
+      // Revert optimistic update
+      setdbAnswer(prevAnswers =>
+        prevAnswers.map(answer =>
+          answer.answerid === answerId
+            ? {
+                ...answer,
+                votes: answer.votes, // Revert to original votes
+                userVote: answer.userVote, // Revert to original userVote
+              }
+            : answer
+        )
+      );
+  
+      // Revert answerVotes
+      setAnswerVotes(prevVotes => ({
+        ...prevVotes,
+        [answerId]: {
+          ...prevVotes[answerId],
+          votes: prevVotes[answerId]?.votes, // Revert to original votes
+          userVote: prevVotes[answerId]?.userVote, // Revert to original userVote
+        },
+      }));
+  
+      // alert('Failed to register vote. Please try again.');
+      toast.error('Failed to register vote. Please try again.');
+    }
+  };
+
+  const handleReplyVote = async (replyId, voteType) => {
+    if (!user) {
+      alert('Please login to vote');
       return;
     }
 
     try {
-      // Optimistically update the UI
-      const currentVotes = answerVotes[answerId] || { votes: { likes: 0, dislikes: 0 }, userVote: null };
-      const newVotes = { ...currentVotes };
-      
-      // If clicking the same vote type, remove the vote
-      if (currentVotes.userVote === voteType) {
-        newVotes.userVote = null;
-        newVotes.votes[voteType === 'like' ? 'likes' : 'dislikes']--;
-      } else {
-        // If changing vote type, update counts
-        if (currentVotes.userVote === 'like') {
-          newVotes.votes.likes--;
-        } else if (currentVotes.userVote === 'dislike') {
-          newVotes.votes.dislikes--;
+      // Optimistically update UI
+      const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+        acc[answerId] = answerReplies.map(reply => {
+          if (reply.replyid === replyId) {
+            const currentVote = reply.userVote || 0;
+            const voteChange = currentVote === voteType ? -voteType : (currentVote === 0 ? voteType : voteType * 2);
+            return {
+              ...reply,
+              votes: reply.votes + voteChange,
+              userVote: currentVote === voteType ? 0 : voteType
+            };
+          }
+          return reply;
+        });
+        return acc;
+      }, {});
+      setReplies(updatedReplies);
+
+      // Make API call
+      const response = await axios.post(
+        `/replies/${replyId}/vote`,
+        { voteType },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-        newVotes.userVote = voteType;
-        newVotes.votes[voteType === 'like' ? 'likes' : 'dislikes']++;
+      );
+
+      if (response.data) {
+        // Update with server response
+        const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+          acc[answerId] = answerReplies.map(reply => {
+            if (reply.replyid === replyId) {
+              return {
+                ...reply,
+                votes: response.data.votes,
+                userVote: response.data.userVote
+              };
+            }
+            return reply;
+          });
+          return acc;
+        }, {});
+        setReplies(updatedReplies);
+      }
+    } catch (error) {
+      console.error('Error voting on reply:', error);
+      // Revert optimistic update
+      const updatedReplies = Object.entries(replies).reduce((acc, [answerId, answerReplies]) => {
+        acc[answerId] = answerReplies.map(reply => {
+          if (reply.replyid === replyId) {
+            return {
+              ...reply,
+              votes: reply.votes,
+              userVote: reply.userVote
+            };
+          }
+          return reply;
+        });
+        return acc;
+      }, {});
+      setReplies(updatedReplies);
+      alert('Failed to register vote. Please try again.');
+    }
+  };
+
+  // Add click handler for images
+  const handleImageClick = (e) => {
+    if (e.target.tagName === 'IMG') {
+      setSelectedImage(e.target.src);
+    }
+  };
+
+  // Add click handler for modal close
+  const handleModalClose = () => {
+    setSelectedImage(null);
+  };
+
+  // Add click handler for modal background
+  const handleModalBackgroundClick = (e) => {
+    if (e.target.className === 'image-modal show') {
+      setSelectedImage(null);
+    }
+  };
+
+  // Function to handle edit button click
+  const handleEditClick = (type, id, content) => {
+    setEditingContent({
+      type,
+      id,
+      content
+    });
+  };
+
+  // Function to handle content update
+  const handleContentUpdate = async (updatedContent) => {
+    try {
+      let endpoint = '';
+      let data = {};
+      console.log("editingContent", editingContent);
+
+      switch (editingContent.type) {
+        case 'question':
+          endpoint = `/questions/${editingContent.id}`;
+          data = { description: updatedContent };
+          break;
+        case 'answer':
+          endpoint = `/answers/${editingContent.id}`;
+          data = { answer: updatedContent };
+          console.log("answer content",data);
+          break;
+        case 'reply':
+          endpoint = `/replies/${editingContent.id}`;
+          console.log("reply content",endpoint);
+          data = { reply: updatedContent };
+          console.log("data", data)
+          break;
+        default:
+          return;
       }
 
-      // Update state immediately
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: newVotes
-      }));
-
-      // Make the API call
-      const response = await axios.post(
-        `/answers/${answerId}/vote`,
-        { voteType },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      
-      // Update with server response to ensure consistency
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: {
-          votes: response.data.votes,
-          userVote: response.data.userVote
-        }
-      }));
-
-      // Show success message
-      const message = response.data.message === 'Vote removed' 
-        ? 'Vote removed successfully' 
-        : 'Vote recorded successfully';
-      
-      console.log(message);
-    } catch (error) {
-      console.error('Error voting:', error);
-      // Revert optimistic update on error
-      const response = await axios.get(`/answers/${answerId}/votes`, {
+      const response = await axios.put(endpoint, data, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      setAnswerVotes(prev => ({
-        ...prev,
-        [answerId]: response.data
-      }));
+
+      if (response.data) {
+        // Refresh the content
+        if (editingContent.type === 'question') {
+          // Refresh question
+          const updatedQuestions = questions.map(q => 
+            q.questionid === questionid 
+              ? { ...q, description: updatedContent }
+              : q
+          );
+          setQuestions(updatedQuestions);
+        } else if (editingContent.type === 'answer') {
+          // Refresh answers
+          const updatedAnswers = dbAnswer.map(a =>
+            a.answerid === editingContent.id
+              ? { ...a, answer: updatedContent }
+              : a
+          );
+          setdbAnswer(updatedAnswers);
+        } else if (editingContent.type === 'reply') {
+          // Refresh replies
+          const currentReplies = replies[editingContent.id] || [];
+          const updatedReplies = currentReplies.map(r =>
+            r.replyid === editingContent.id
+              ? { ...r, reply: updatedContent }
+              : r
+          );
+          console.log("updated reply",updatedReplies);
+          setReplies(prev => ({
+            ...prev,
+            [editingContent.id]: updatedReplies
+          }));
+        }
+        toast.success('Content updated successfully!');
+        // Clear editing state
+        setEditingContent({ type: null, id: null, content: null });
+      }
+    } catch (error) {
+      console.error('Error updating content:', error);
+      // alert('Failed to update content. Please try again.');
+      toast.error('Failed to update content. Please try again.');
     }
+  };
+
+  // Function to cancel editing
+  const handleCancelEdit = () => {
+    setEditingContent({ type: null, id: null, content: null });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
       <div className="card mb-4">
         <div className="card-body">
-          <h4 className="card-title">Question</h4>
-          <h5 className="card-subtitle mb-2 text-muted">Title: {selectedQuestion?.title}</h5>
-          <p className="card-text">{selectedQuestion?.description}</p>
+          <div className="d-flex align-items-center mb-3">
+            <h4 className="card-title mb-0 me-2">Question</h4>
+            {user.userId === questionData?.userid && (
+              <button
+                className="btn btn-link p-0 edit-button"
+                style={{top: "16px", right: "16px" }}
+                onClick={() => handleEditClick('question', questionid, questionData.description)}
+              >
+                <i className="fas fa-pencil-alt"></i>
+              </button>
+            )}
+          </div>
+          <h5 className="card-subtitle mb-2 text-muted">Title: {questionData?.title}</h5>
+          {questionData?.created_at && (
+            <small className="text-muted d-block mb-3 posted_date">Posted on {formatDate(questionData.created_at)}</small>
+          )}
+          <div className="position-relative">
+            {editingContent.type === 'question' ? (
+              <div className="rich-text-editor">
+                <ReactQuill
+                  theme="snow"
+                  modules={modules}
+                  formats={formats}
+                  value={editingContent.content}
+                  onChange={(content) => setEditingContent(prev => ({ ...prev, content }))}
+                />
+                <div className="mt-3">
+                  <button 
+                    className="btn btn-success me-2"
+                    onClick={() => handleContentUpdate(editingContent.content)}
+                  >
+                    Save Changes
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="card-text" onClick={handleImageClick}>
+                {parse(DOMPurify.sanitize(convertImageUrls(questionData?.description), {
+                  ADD_TAGS: ['img'],
+                  ADD_ATTR: ['src', 'alt', 'style']
+                }))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -195,7 +588,41 @@ function QuestionDetail() {
               <p className="username">{answerData.username}</p>
             </div>
             <div className="col-md-11 ps-5">
-              <p className="answer-text">{answerData.answer}</p>
+              {editingContent.type === 'answer' && editingContent.id === answerData.answerid ? (
+                <div className="rich-text-editor">
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    value={editingContent.content}
+                    onChange={(content) => setEditingContent(prev => ({ ...prev, content }))}
+                  />
+                  <div className="mt-3">
+                    <button 
+                      className="btn btn-success me-2"
+                      onClick={() => handleContentUpdate(editingContent.content)}
+                    >
+                      Save Changes
+                    </button>
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="answer-text position-relative" onClick={handleImageClick}>
+                  {parse(DOMPurify.sanitize(convertImageUrls(answerData.answer), {
+                    ADD_TAGS: ['img'],
+                    ADD_ATTR: ['src', 'alt', 'style']
+                  }))}
+                  {answerData.created_at && (
+                    <small className="text-muted d-block mt-2 posted_date">Answered on {formatDate(answerData.created_at)}</small>
+                  )}
+                </div>
+              )}
             </div>
             <div className="d-flex justify-content-end" style={{ marginLeft: "-40px" }}>
               <div className="vote-buttons">
@@ -219,6 +646,14 @@ function QuestionDetail() {
                     <span className="vote-count">{answerVotes[answerData.answerid]?.votes?.dislikes}</span>
                   )}
                 </button>
+                {user.userId === answerData.userid && (
+                  <button
+                    className="btn btn-link edit-button"
+                    onClick={() => handleEditClick('answer', answerData.answerid, answerData.answer)}
+                  >
+                    <i className="fas fa-pencil-alt"></i>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -228,6 +663,10 @@ function QuestionDetail() {
               replies={replies[answerData.answerid] || []}
               setReplies={setReplies}
               user={user}
+              onEditReply={handleEditClick}
+              editingContent={editingContent}
+              onContentUpdate={handleContentUpdate}
+              onCancelEdit={handleCancelEdit}
             />
           )}
         </div>
@@ -241,21 +680,22 @@ function QuestionDetail() {
           {isAuthenticated ? (
             <form onSubmit={handleSubmit(handleClick)}>
               <div className="form-group">
-                <textarea
-                  className={`form-control w-75 mx-auto ${errors.answer ? "is-invalid" : ""}`}
-                  rows="6"
-                  placeholder="Your answer..."
-                  {...register("answer", {
-                    required: "Answer is required",
-                    maxLength: {
-                      value: 300,
-                      message: "Maximum allowed length is 300",
-                    },
-                  })}
-                  onKeyUp={() => {
-                    trigger("answer");
-                  }}
-                />
+                <div className="rich-text-editor">
+                  <ReactQuill
+                    ref={quillRef}
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    value={watch("answer") || ""}
+                    onChange={(content) => {
+                      setValue("answer", content);
+                      trigger("answer");
+                    }}
+                    placeholder="Your answer..."
+                    className={`w-75 mx-auto ${errors.answer ? "invalid" : ""}`}
+                    preserveWhitespace={true}
+                  />
+                </div>
                 {errors.answer && (
                   <div className="invalid-feedback">
                     {errors.answer.message}
@@ -281,6 +721,23 @@ function QuestionDetail() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Image Modal */}
+      <div 
+        className={`image-modal ${selectedImage ? 'show' : ''}`} 
+        onClick={handleModalBackgroundClick}
+      >
+        {selectedImage && (
+          <>
+            <span className="image-modal-close" onClick={handleModalClose}>&times;</span>
+            <img 
+              src={selectedImage} 
+              alt="Enlarged view" 
+              className="image-modal-content"
+            />
+          </>
+        )}
       </div>
     </div>
   );

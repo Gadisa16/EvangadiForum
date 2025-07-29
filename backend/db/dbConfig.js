@@ -85,4 +85,35 @@ dbconnection.execute(`
   )
 `);
 
+// Create images table if it doesn't exist
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS images (
+    imageid INT PRIMARY KEY AUTO_INCREMENT,
+    userid INT NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    originalname VARCHAR(255) NOT NULL,
+    mimetype VARCHAR(100) NOT NULL,
+    size INT NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
+  )
+`);
+
+// Create notifications table
+dbconnection.execute(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    notification_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    sender_id INT,
+    type ENUM('answer', 'comment', 'upvote', 'mention', 'system') NOT NULL,
+    content TEXT NOT NULL,
+    reference_id VARCHAR(36),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(userid) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(userid) ON DELETE SET NULL
+  )
+`);
+
 module.exports = dbconnection.promise();
