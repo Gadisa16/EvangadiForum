@@ -4,6 +4,7 @@ import axios from "../../axios";
 import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import "./Profile.css";
 import { toast } from "react-toastify";
+import BackButton from "../BackButton/BackButton";
 
 const Profile = () => {
   const [profile, setProfile] = useState({
@@ -135,7 +136,8 @@ const Profile = () => {
       <h2>Profile Settings</h2>
       {/* {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>} */}
-      <form onSubmit={handleSubmit} className="profile-form">
+      <form onSubmit={handleSubmit} className="profile-form position-relative">
+        <BackButton />
         <div className="profile-picture-section" onClick={handleProfilePictureClick}>
           <ProfilePicture profilePicture={previewUrl} size="xlarge" />
           <div className="profile-picture-overlay">
