@@ -27,7 +27,7 @@ async function postQuestion(req,res){
 async function allQuestions(req, res) {
     try {
         const query = `
-            SELECT q.questionid, q.title, q.description, q.created_at, u.username
+            SELECT q.questionid, q.title, q.description, q.created_at, u.username, u.profilePicture, u.bio
             FROM questions q
             JOIN users u ON q.userid = u.userid
             ORDER BY q.created_at DESC;

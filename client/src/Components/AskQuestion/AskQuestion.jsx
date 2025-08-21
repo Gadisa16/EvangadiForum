@@ -8,6 +8,7 @@ import { userProvider } from '../../Context/UserProvider';
 import axios from "../../axios";
 import "./AskQuestion.css";
 import { toast } from 'react-toastify';
+import BackButton from '../BackButton/BackButton';
 
 function AskQuestion() {
   const {
@@ -111,8 +112,11 @@ function AskQuestion() {
         }
       );
       
+      toast.success("Question posted successfully!");
+      // Reset form after successful post
       reset();
     } catch (error) {
+      toast.error(error.response?.data?.msg || "Failed to post question. Please try again.");
       console.error("Error posting question:", error.response || error);
     }
   }
@@ -120,6 +124,7 @@ function AskQuestion() {
   return (
     <div className="top container text-center">
       <div className="py-5">
+        <BackButton />
         <h2>Steps to Write a Good Question</h2>
         <ol className="text-start mx-auto" style={{ maxWidth: "450px" }}>
           <li>Add a more precise tag about the question type.</li>

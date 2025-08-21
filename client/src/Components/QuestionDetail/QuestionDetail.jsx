@@ -12,6 +12,8 @@ import axios from "../../axios";
 import "./QuestionDetail.css";
 import Reply from './Reply';
 import { toast } from 'react-toastify';
+import BackButton from '../BackButton/BackButton';
+
 
 // Import Quill modules
 
@@ -515,8 +517,9 @@ function QuestionDetail() {
 
   return (
     <div className="top mx-auto" style={{ width: "86%" }}>
-      <div className="card mb-4">
-        <div className="card-body">
+      <div className="card mb-4 position-relative">
+        <BackButton />
+        <div className="card-body pt-4">
           <div className="d-flex align-items-center mb-3">
             <h4 className="card-title mb-0 me-2">Question</h4>
             {user.userId === questionData?.userid && (

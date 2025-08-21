@@ -3,6 +3,7 @@ import "./SignUp.css";
 import axios from "../../axios.js";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function SignUp({ toggleForm }) {
   const [errorResponse, setError] = useState("");
@@ -38,11 +39,13 @@ function SignUp({ toggleForm }) {
         email: data.email,
       });
 
+      toast.success("User registered successfully!");
       setSuccess("User registered successfully!");
       reset();
       toggleForm();
     } catch (error) {
       console.log(error);
+      toast.error(error.response.data.msg || "Registration failed. Try again.");
       setError(error.response.data.msg || "Registration failed. Try again.");
     } finally {
       setIsLoading(false);

@@ -1,9 +1,11 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userProvider } from '../../Context/UserProvider';
+import { Tooltip } from 'react-tooltip'
 import "./Question.css";
+import ProfilePicture from '../ProfilePicture/ProfilePicture';
 
-function Question({ title, username, questionid, isAuthenticated, created_at }) {
+function Question({ title, username, profilePicture, bio, questionid, isAuthenticated, created_at }) {
   const navigate = useNavigate();
   const { user } = useContext(userProvider);
 
@@ -31,7 +33,16 @@ function Question({ title, username, questionid, isAuthenticated, created_at }) 
   return (
     <div className="border-top row top_question" onClick={handleClick}>
       <div className="col-md-1 d-flex flex-column align-items-md-center my-md-auto">
-        <i className="fas fa-user-circle fa-3x user" />
+        {profilePicture ? (
+          <span data-tooltip-id={`bio-tooltip-${questionid}`} data-tooltip-content={bio || 'No bio available'}>
+            <ProfilePicture profilePicture={profilePicture} size="medium" />
+          </span>
+        ) : (
+          <span data-tooltip-id={`bio-tooltip-${questionid}`} data-tooltip-content={bio || 'No bio available'}>
+            <i className="fas fa-user-circle fa-3x user" />
+          </span>
+        )}
+        <Tooltip id={`bio-tooltip-${questionid}`} place="top" effect="solid" />
         <p className="mb-0">{username}</p>
       </div>
       <div className="col-md-3 my-md-auto">

@@ -1,0 +1,35 @@
+#back-button {
+    position: absolute;
+    top: -16px;
+    background: linear-gradient(90deg, rgb(103, 107, 109) 0%, #ebecec 100%) !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(81, 108, 240, 0.12);
+    padding: 3px 9px 3px 4px;
+    cursor: pointer;
+    transition:
+        box-shadow 0.3s,
+        transform 0.2s,
+        background 0.3s,
+        color 0.3s;
+}
+
+#back-button:hover {
+    /* background: linear-gradient(90deg, #e73c7e 0%, #23a6d5 100%); */
+    /* color: #fff; */
+    /* box-shadow: 0 4px 24px rgba(81, 108, 240, 0.22); */
+    transform: scale(1.06) translateY(-2px);
+}
+
+#back-button:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(81, 108, 240, 0.18);
+}
+
+#back-button svg {
+    transition: transform 0.3s, filter 0.3s;
+}
+
+#back-button:hover svg {
+    transform: scale(1.15) rotate(-8deg);
+    filter: drop-shadow(0 0 6px #23a6d5);
+}

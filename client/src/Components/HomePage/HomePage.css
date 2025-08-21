@@ -14,7 +14,7 @@
     align-items: center;
 }
 
-.qb {
+/* .qb {
     background-color: #516CF0;
     width: 200px;
     height: 40px;
@@ -23,11 +23,79 @@
     color: white;
     font-weight: bold;
     transition: background-color 0.3s ease;
+    background: linear-gradient(-45deg, #ecc1b4, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
 }
 
 .qb:hover {
     background-color: #3A4DB7;
+} */
+
+/*button animation start*/
+.qb {
+    background: linear-gradient(120deg, #ecc1b4, #e73c7e, #23a6d5, #23d5ab, #f7b42c, #fc575e);
+    background-size: 600% 600%;
+    animation: gradientMove 8s ease-in-out infinite;
+    width: 200px;
+    height: 45px;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 6px 24px rgba(81, 108, 240, 0.25), 0 1.5px 6px rgba(23, 166, 213, 0.15);
+    transition:
+        background 0.3s,
+        box-shadow 0.3s,
+        transform 0.2s,
+        filter 0.3s;
+    perspective: 500px;
+    position: relative;
+    overflow: hidden;
 }
+
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.qb::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    box-shadow: 0 0 16px 8px rgba(81, 108, 240, 0.15), 0 0 80px 20px rgba(23, 213, 171, 0.10);
+    opacity: 0.7;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.qb:hover {
+    background: linear-gradient(120deg, #fc575e, #f7b42c, #23d5ab, #23a6d5, #e73c7e, #ecc1b4);
+    background-size: 600% 600%;
+    animation: gradientMove 3s ease-in-out infinite;
+    box-shadow: 0 6px 16px rgba(81, 108, 240, 0.35), 0 2px 8px rgba(23, 166, 213, 0.25);
+    transform: scale(1.07) rotateX(8deg) rotateY(-8deg);
+    filter: brightness(1.15) drop-shadow(0 0 12px #23d5ab);
+}
+
+.qb:hover::before {
+    opacity: 1;
+}
+/*button animation end*/
 
 .wel {
     font-size: 1.2em;

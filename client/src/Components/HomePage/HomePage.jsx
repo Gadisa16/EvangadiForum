@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useContext, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
@@ -63,7 +64,7 @@ function HomePage() {
       setLoading(true);
       setError(null);
       const response = await axios.get("/questions/all_questions");
-      
+      console.log(response.data);
       if (response.data && Array.isArray(response.data.data)) {
         setQuestions(response.data.data);
       } else {
@@ -163,7 +164,7 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              <h4 className="wel">Welcome Guest</h4>
+              <h4 className="wel">Welcome, Guest</h4>
             )}
           </div>
         </div>
@@ -176,16 +177,27 @@ function HomePage() {
       ) : questions.length === 0 ? (
         <div className="text-center">No questions available</div>
       ) : (
-        questions.map((question, index) => (
-          <Question
-            key={question.questionid || index}
-            title={question.title}
-            username={capitalizeName(question.username)}
-            questionid={question.questionid}
-            isAuthenticated={isAuthenticated}
-            created_at={question.created_at}
-          />
-        ))
+        <AnimatePresence>
+          {questions.map((question, index) => (
+            <motion.div
+              key={question.questionid || index}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ delay: index * 0.08, duration: 0.5, type: "spring" }}
+            >
+              <Question
+                username={capitalizeName(question.username)}
+                profilePicture={question.profilePicture}
+                bio = {question.bio}
+                title={question.title}
+                questionid={question.questionid}
+                isAuthenticated={isAuthenticated}
+                created_at={question.created_at}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       )}
     </div>
   );
