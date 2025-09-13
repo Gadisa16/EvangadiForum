@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -31,7 +30,6 @@ instance.interceptors.response.use(
       localStorage.removeItem('token');
       // Using window.location.href to force a reload and clear state
       // window.location.href = '/register';
-      navigate('/register');
     }
     return Promise.reject(error);
   }
