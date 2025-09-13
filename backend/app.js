@@ -11,10 +11,12 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
+const allowed_origins = process.env.ALLOWED_ORIGINS.split(',') || [];
+
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowed_origins,
     methods: ["GET", "POST"],
     credentials: true
   }

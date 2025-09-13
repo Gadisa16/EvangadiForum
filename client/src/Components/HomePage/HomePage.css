@@ -8,29 +8,11 @@
 }
 
 .hed {
-    padding-top: 45px;
+    /* padding-top: 45px; */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-
-/* .qb {
-    background-color: #516CF0;
-    width: 200px;
-    height: 40px;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    background: linear-gradient(-45deg, #ecc1b4, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-}
-
-.qb:hover {
-    background-color: #3A4DB7;
-} */
 
 /*button animation start*/
 .qb {
@@ -203,6 +185,43 @@
 .stat-item i {
     color: #516CF0;
     font-size: 1.1rem;
+}
+
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+    margin-top: 2rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: blink 2.5s infinite ease-in-out;
+}
+
+.empty-state-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.empty-state-text.error {
+    color: #dc3545;
+}
+
+@keyframes blink {
+    0%, 100% {
+        transform: scale(1, 1);
+    }
+    50% {
+        transform: scale(1, 0.1);
+    }
 }
 
 @media (max-width: 768px) {

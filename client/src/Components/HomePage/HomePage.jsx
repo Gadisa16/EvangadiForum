@@ -171,11 +171,27 @@ function HomePage() {
         <h3 className="ns">Questions</h3>
       </div>
       {loading ? (
-        <div className="loading">Loading...</div>
+        <div className="empty-state-container">
+          <div className="empty-state-icon">
+            <i className="fas fa-spinner fa-spin"></i>
+          </div>
+          <p className="empty-state-text">Loading questions...</p>
+        </div>
       ) : error ? (
-        <div className="text-danger text-center">{error}</div>
+        <div className="empty-state-container">
+          <div className="empty-state-icon" style={{ animation: 'none' }}>
+            <i className="fas fa-exclamation-triangle text-danger"></i>
+          </div>
+          <p className="empty-state-text error">{error}</p>
+        </div>
       ) : questions.length === 0 ? (
-        <div className="text-center">No questions available</div>
+        <div className="empty-state-container">
+          <div className="empty-state-icon">
+            <i className="fas fa-eye"></i>
+          </div>
+          <p className="empty-state-text">No questions available at the moment.</p>
+          <p className="empty-state-text">Be the first to ask!</p>
+        </div>
       ) : (
         <AnimatePresence>
           {questions.map((question, index) => (

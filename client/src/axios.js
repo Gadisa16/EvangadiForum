@@ -2,10 +2,11 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true
 });
 
 // Add a request interceptor
@@ -28,8 +29,9 @@ instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      // Using window.location.href to force a reload and clear state
       // window.location.href = '/register';
-      useNavigate('/register')
+      navigate('/register');
     }
     return Promise.reject(error);
   }
