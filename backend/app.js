@@ -77,7 +77,7 @@ const upload = multer({
 
 // Configure CORS
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite's default port
+  origin: allowed_origins,
   credentials: true
 }));
 
