@@ -16,7 +16,7 @@ function Landing() {
   return (
     <div className="home">
       <div className="container">
-        <div className="con row">
+        <div className="p-4 row">
           {showSignIn ? (
             <SignIn key="signIn" toggleForm={toggleForm} />
           ) : (

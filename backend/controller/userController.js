@@ -46,7 +46,7 @@ async function login(req, res) {
 
     try {
         const [user] = await dbConnection.query("SELECT username, userid, password FROM users WHERE email = ?", [email]);
-
+        console.log("user received in backend",user);
         // Check if the credentials are valid
         if (user.length === 0) {
             return res.status(StatusCodes.BAD_REQUEST).json({ msg: "invalid credential" });

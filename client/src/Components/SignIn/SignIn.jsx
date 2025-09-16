@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { userProvider } from "../../Context/UserProvider";
 import "./SignIn.css";
+import { toast } from "react-toastify";
 
 function SignIn({ toggleForm }) {
   const {
@@ -15,6 +16,7 @@ function SignIn({ toggleForm }) {
   const { login } = useContext(userProvider);
   const [passwordVisible, setPasswordVisible] = useState(true);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -22,14 +24,18 @@ function SignIn({ toggleForm }) {
 
   async function onSubmit(data) {
     setError("");
+    setIsLoading(true);
+
     const result = await login({
       password: data.password,
       email: data.email,
     });
 
     if (!result.success) {
+      toast.error(result.error || "Login failed. Try again.");
       setError(result.error);
     }
+    setIsLoading(false);
   }
 
   return (
@@ -78,7 +84,7 @@ function SignIn({ toggleForm }) {
             }}
           />
 
-          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "112px", top: "10px" }}>
+          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "5vw", top: "10px" }}>
             {passwordVisible ? (
               <i className="fas fa-eye-slash" />
             ) : (
@@ -92,10 +98,14 @@ function SignIn({ toggleForm }) {
           <div className="text-danger">{errors.password.message}</div>
         )}
         
-        {error && <div className="text-danger">{error}</div>}
+        {/* {error && <div className="text-danger">{error}</div>} */}
 
-        <button className="login__signInButton" type="submit">
-          Submit
+        <button className={`login__signInButton ${isLoading? "cursor-not-allowed":"cursor-pointer"}`} type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <output className="spinner-border spinner-border-sm" aria-hidden="true"></output>
+          ) : (
+            "Submit"
+          )}
         </button>
       </form>
     </div>

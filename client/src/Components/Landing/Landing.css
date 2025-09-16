@@ -4,15 +4,15 @@
     background-position: center;
 
     z-index: 0;
-    margin-top: 81px;
+    /* margin-top: 81px; */
     background-repeat: no repeat;
 
 
 }
 
-.con {
+/* .con {
     padding-top: 140px;
-}
+} */
 
 .info {
     max-width: 500px;

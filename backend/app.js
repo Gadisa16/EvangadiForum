@@ -77,7 +77,7 @@ const upload = multer({
 
 // Configure CORS
 app.use(cors({
-  origin: allowed_origins,
+  origin: true,
   credentials: true
 }));
 

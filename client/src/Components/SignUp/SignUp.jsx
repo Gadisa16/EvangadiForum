@@ -44,9 +44,9 @@ function SignUp({ toggleForm }) {
       reset();
       toggleForm();
     } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.msg || "Registration failed. Try again.");
-      setError(error.response.data.msg || "Registration failed. Try again.");
+      console.log("registration",error);
+      toast.error(error?.message || "Registration failed. Try again.");
+      setError(error?.response?.data?.msg || "Registration failed. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +130,7 @@ function SignUp({ toggleForm }) {
               trigger("password");
             }}
           />
-          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "112px", top: "10px" }}>
+          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "5vw", top: "10px" }}>
             {passwordVisible ? (
               <i className="fas fa-eye-slash" />
             ) : (
