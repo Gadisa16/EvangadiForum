@@ -107,8 +107,8 @@ function HomePage() {
       <div className="homp">
         <div className="row hed mb-5">
           <div className="col-md-6 d-flex justify-content-center justify-content-md-start">
-            <button onClick={handleAskQuestion} className="qb">
-              Ask Question
+            <button onClick={handleAskQuestion} className="qba">
+              <span>Ask Question</span>
             </button>
           </div>
           <div className="col-md-6 d-flex justify-content-center justify-content-md-end">
