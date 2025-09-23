@@ -164,7 +164,7 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              <h4 className="wel">Welcome, Guest</h4>
+              <h4 className="wel">Welcome, Guest!</h4>
             )}
           </div>
         </div>
