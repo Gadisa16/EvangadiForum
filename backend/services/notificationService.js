@@ -3,11 +3,11 @@ const dbconnection = require('../db/dbConfig');
 class NotificationService {
   static async createNotification(userId, senderId, type, content, referenceId = null) {
     try {
-      const [result] = await dbconnection.execute(
-        'INSERT INTO notifications (user_id, sender_id, type, content, reference_id) VALUES (?, ?, ?, ?, ?)',
+      const [rows] = await dbconnection.execute(
+        'INSERT INTO notifications (user_id, sender_id, type, content, reference_id) VALUES (?, ?, ?, ?, ?) RETURNING notification_id',
         [userId, senderId, type, content, referenceId]
       );
-      return result.insertId;
+      return rows[0]?.notification_id;
     } catch (error) {
       console.error('Error creating notification:', error);
       throw error;

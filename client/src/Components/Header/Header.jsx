@@ -1,11 +1,11 @@
-import React, { useContext, useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { FaBell, FaCog, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "../../axios";
 import { useNotifications } from "../../Context/NotificationContext";
 import { userProvider } from "../../Context/UserProvider";
 import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import "./Header.css";
-import axios from "../../axios";
 
 function Header() {
   const { user, isAuthenticated, logout } = useContext(userProvider);
@@ -54,18 +54,18 @@ function Header() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Ensure axios is available and correctly configured
         const response = await axios.get("/users/profile");
         setProfilePicture(response.data.profilePicture);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
       }
     };
-
-    // Fetch profile picture when the component mounts
-    fetchProfile();
-  
-  }, []);
+    if (isAuthenticated) {
+      fetchProfile();
+    } else {
+      setProfilePicture(null);
+    }
+  }, [isAuthenticated]);
 
   return (
     <nav className="navbar">

@@ -11,12 +11,15 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
-const allowed_origins = process.env.ALLOWED_ORIGINS.split(',') || [];
+const allowed_origins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: allowed_origins,
+    origin: allowed_origins.length ? allowed_origins : true,
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -77,7 +80,12 @@ const upload = multer({
 
 // Configure CORS
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (!origin || allowed_origins.length === 0 || allowed_origins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 

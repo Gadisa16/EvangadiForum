@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const { StatusCodes } = require('http-status-codes');
 const jwt = require('jsonwebtoken');
 const path = require('path');
-const fs = require('fs').promises;
+const { supabase } = require('../utils/supabaseClient');
 
 async function register(req, res) {
     const { username, firstname, lastname, email, password } = req.body;
@@ -96,7 +96,25 @@ async function updateProfile(req, res) {
 
         let profilePicturePath = null;
         if (profilePicture) {
-            profilePicturePath = `/uploads/${profilePicture.filename}`;
+            if (!supabase) {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: 'Storage not configured' });
+            }
+            const ext = path.extname(profilePicture.originalname).toLowerCase();
+            const filename = `${req.user.userid}-pfp-${Date.now()}${ext}`;
+            const objectPath = `${req.user.userid}/${filename}`;
+            const { error: uploadError } = await supabase.storage
+                .from('images')
+                .upload(objectPath, profilePicture.buffer, {
+                    contentType: profilePicture.mimetype,
+                    cacheControl: '3600',
+                    upsert: true
+                });
+            if (uploadError) {
+                console.error('Supabase pfp upload error:', uploadError);
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: 'Failed to upload image' });
+            }
+            const { data } = supabase.storage.from('images').getPublicUrl(objectPath);
+            profilePicturePath = data?.publicUrl;
         }
 
         // Update user profile

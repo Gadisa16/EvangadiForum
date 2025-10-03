@@ -1,15 +1,16 @@
-import React from 'react';
 import './ProfilePicture.css';
 
 const ProfilePicture = ({ profilePicture, size = 'medium', className = '' }) => {
   const getImageUrl = () => {
     if (!profilePicture) {
-      return '/default_profile.webp';
+      return '/default_profile.webp'; // from client/public
     }
-    if (profilePicture.startsWith('data:') || profilePicture.startsWith('http')) {
+    // Already an absolute URL (e.g., Supabase public URL) or data URL
+    if (/^https?:\/\//i.test(profilePicture) || profilePicture.startsWith('data:')) {
       return profilePicture;
     }
-    return `http://localhost:3000${profilePicture}`;
+    // Legacy local uploads path from old backend
+    return `${import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')}${profilePicture}`;
   };
 
   return (

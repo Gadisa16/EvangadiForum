@@ -190,7 +190,7 @@ function HomePage() {
             <i className="fas fa-eye"></i>
           </div>
           <p className="empty-state-text">No questions available at the moment.</p>
-          <p className="empty-state-text">Be the first to ask!</p>
+          <button className="empty-state-text qba" onClick={handleAskQuestion}><span>Be the first to ask!</span></button>
         </div>
       ) : (
         <AnimatePresence>

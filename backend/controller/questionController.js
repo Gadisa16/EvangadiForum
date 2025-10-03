@@ -1,26 +1,41 @@
 const dbconnection=require("../db/dbConfig.js")
 const { StatusCodes } = require("http-status-codes");
 
-async function postQuestion(req,res){
+async function postQuestion(req, res) {
+    const { tag, title, description, questionId } = req.body;
+    const userId = req.user?.userid; // Trust server-side auth, not client input
 
-    const {tag,title,description,questionId,userId}=req.body
-    
-    if(!tag ||!title||!description){
-        return res.status(StatusCodes.BAD_REQUEST).json({msg:"Please provide all required inputs"})
+    if (!tag || !title || !description) {
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json({ msg: "Please provide all required inputs" });
     }
+    if (!userId) {
+        return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ msg: "Not authenticated" });
+    }
+
     try {
-        
         await dbconnection.query(
             "INSERT INTO questions(questionid,userid,title,description,tag) VALUES(?,?,?,?,?)",
-            [questionId,userId,title,description,tag]
+            [questionId, userId, title, description, tag]
         );
-        
-        return res.status(StatusCodes.CREATED).json({ msg: "question posted successfully" });
+
+        return res
+            .status(StatusCodes.CREATED)
+            .json({ msg: "question posted successfully" });
     } catch (error) {
-        console.log("posted",error)
-                return res
-                .status(StatusCodes.INTERNAL_SERVER_ERROR)
-                .json({ msg: "Something went wrong try again later" });
+        console.log("postQuestion error:", error);
+        // Postgres FK violation code is 23503
+        if (error && (error.code === '23503' || /foreign key/i.test(error.message))) {
+            return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json({ msg: "Your account was not found. Please log out and log in again, or re-register." });
+        }
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json({ msg: "Something went wrong. Please try again later." });
     }
 }
 

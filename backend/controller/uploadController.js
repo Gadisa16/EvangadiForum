@@ -1,18 +1,10 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const dbConnection = require('../db/dbConfig');
+const { supabase } = require('../utils/supabaseClient');
 
-// Configure multer for image upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for image upload (memory storage for Supabase upload)
+const storage = multer.memoryStorage();
 
 // File filter to only allow images
 const fileFilter = (req, file, cb) => {
@@ -24,11 +16,9 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // Handle image upload
@@ -37,10 +27,33 @@ const uploadImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
+    if (!supabase) {
+      return res.status(500).json({ error: 'Storage not configured. Contact admin.' });
+    }
 
-    const { filename, originalname, mimetype, size } = req.file;
+    const { originalname, mimetype, size, buffer } = req.file;
     const userId = req.user.userid;
-    const imageUrl = `/uploads/${filename}`;
+    const ext = path.extname(originalname).toLowerCase();
+    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const objectPath = `${userId}/${filename}`; // per-user folder
+
+    // Ensure bucket exists in Supabase: create a bucket named 'images' (public) in dashboard
+    const { error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(objectPath, buffer, {
+        contentType: mimetype,
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      return res.status(500).json({ error: 'Failed to upload image' });
+    }
+
+    // Get a public URL (requires bucket to be set as public)
+    const { data } = supabase.storage.from('images').getPublicUrl(objectPath);
+    const imageUrl = data?.publicUrl;
 
     // Store image information in database
     await dbConnection.query(
@@ -48,16 +61,9 @@ const uploadImage = async (req, res) => {
       [userId, filename, originalname, mimetype, size, imageUrl]
     );
 
-    // Return the URL of the uploaded image
     res.json({ url: imageUrl });
   } catch (error) {
     console.error('Error uploading image:', error);
-    // If database insert fails, delete the uploaded file
-    if (req.file) {
-      fs.unlink(req.file.path, (err) => {
-        if (err) console.error('Error deleting file:', err);
-      });
-    }
     res.status(500).json({ error: 'Error uploading image' });
   }
 };
@@ -83,7 +89,6 @@ const deleteImage = async (req, res) => {
     const { imageId } = req.params;
     const userId = req.user.userid;
 
-    // Get image info before deleting
     const [images] = await dbConnection.query(
       'SELECT * FROM images WHERE imageid = ? AND userid = ?',
       [imageId, userId]
@@ -95,17 +100,18 @@ const deleteImage = async (req, res) => {
 
     const image = images[0];
 
-    // Delete from database
+    // Remove from storage (best-effort)
+    if (supabase) {
+      const objectPath = `${userId}/${image.filename}`;
+      const { error: removeErr } = await supabase.storage.from('images').remove([objectPath]);
+      if (removeErr) console.warn('Supabase remove error:', removeErr.message);
+    }
+
+    // Delete DB record
     await dbConnection.query(
       'DELETE FROM images WHERE imageid = ? AND userid = ?',
       [imageId, userId]
     );
-
-    // Delete file from filesystem
-    const filePath = path.join(__dirname, '..', image.filename);
-    fs.unlink(filePath, (err) => {
-      if (err) console.error('Error deleting file:', err);
-    });
 
     res.json({ message: 'Image deleted successfully' });
   } catch (error) {

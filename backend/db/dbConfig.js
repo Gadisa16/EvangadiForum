@@ -1,36 +1,77 @@
-const mysql2 = require('mysql2');
+const { Pool } = require('pg');
 
-// Provide a fallback host if not defined (common local default)
-const host = process.env.HOST || 'localhost';
+// Prefer a single DATABASE_URL (works well with Supabase/Railway/Render). Fallbacks supported.
+const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 
-// Create a standard pool
-const pool = mysql2.createPool({
-  host,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE,
-  connectionLimit: 10
-});
+const hasConnection = !!connectionString;
+if (!hasConnection) {
+  console.warn('DATABASE_URL/SUPABASE_DB_URL is not set. Please configure your Supabase Postgres connection string.');
+}
 
-// Create a promise-enabled pool wrapper
-const db = pool.promise();
+// Create a Postgres pool only when we have a connection string.
+const pool = hasConnection
+  ? new Pool({
+      connectionString,
+      ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false }
+    })
+  : null;
 
-// Helper to run table creation sequentially with proper error handling
+// Convert MySQL-style '?' placeholders to Postgres-style $1, $2, ...
+function mapPlaceholders(sql) {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
+
+// A small wrapper to mimic mysql2/promise API: return [rows] and support .execute()
+const missingConnError = () => new Error('DATABASE_URL is not set. Set it in backend/.env or Render env and restart the server.');
+
+const db = hasConnection
+  ? {
+      async query(sql, params = []) {
+        const text = mapPlaceholders(sql);
+        const result = await pool.query(text, params);
+        return [result.rows, null];
+      },
+      async execute(sql, params = []) {
+        return db.query(sql, params);
+      }
+    }
+  : {
+      async query() {
+        throw missingConnError();
+      },
+      async execute() {
+        throw missingConnError();
+      }
+    };
+
+// Helper to run table creation sequentially with proper error handling (Postgres syntax)
 async function initSchema() {
   const statements = [
+    // Users table (since other tables reference it)
+    `CREATE TABLE IF NOT EXISTS users (
+      userid SERIAL PRIMARY KEY,
+      username VARCHAR(100) NOT NULL UNIQUE,
+      firstname VARCHAR(100) NOT NULL,
+      lastname VARCHAR(100) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      profilePicture TEXT,
+      bio TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
     `CREATE TABLE IF NOT EXISTS questions (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      questionid VARCHAR(36) NOT NULL,
+      id SERIAL PRIMARY KEY,
+      questionid VARCHAR(36) NOT NULL UNIQUE,
       userid INT NOT NULL,
       title VARCHAR(200) NOT NULL,
       description TEXT NOT NULL,
       tag VARCHAR(50) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE,
-      UNIQUE KEY unique_question (questionid)
+      FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS answers (
-      answerid INT PRIMARY KEY AUTO_INCREMENT,
+      answerid SERIAL PRIMARY KEY,
       userid INT NOT NULL,
       questionid VARCHAR(36) NOT NULL,
       answer TEXT NOT NULL,
@@ -39,17 +80,17 @@ async function initSchema() {
       FOREIGN KEY (questionid) REFERENCES questions(questionid) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS answer_votes (
-      vote_id INT PRIMARY KEY AUTO_INCREMENT,
+      vote_id SERIAL PRIMARY KEY,
       answer_id INT NOT NULL,
       user_id INT NOT NULL,
-      vote_type ENUM('like', 'dislike') NOT NULL,
+      vote_type VARCHAR(10) NOT NULL CHECK (vote_type IN ('like','dislike')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (answer_id) REFERENCES answers(answerid) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES users(userid) ON DELETE CASCADE,
-      UNIQUE KEY unique_vote (answer_id, user_id)
+      UNIQUE (answer_id, user_id)
     )`,
     `CREATE TABLE IF NOT EXISTS replies (
-      replyid INT PRIMARY KEY AUTO_INCREMENT,
+      replyid SERIAL PRIMARY KEY,
       answerid INT NOT NULL,
       userid INT NOT NULL,
       reply_text TEXT NOT NULL,
@@ -58,17 +99,17 @@ async function initSchema() {
       FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS reply_votes (
-      vote_id INT PRIMARY KEY AUTO_INCREMENT,
+      vote_id SERIAL PRIMARY KEY,
       reply_id INT NOT NULL,
       user_id INT NOT NULL,
-      vote_type ENUM('like', 'dislike') NOT NULL,
+      vote_type VARCHAR(10) NOT NULL CHECK (vote_type IN ('like','dislike')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (reply_id) REFERENCES replies(replyid) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES users(userid) ON DELETE CASCADE,
-      UNIQUE KEY unique_reply_vote (reply_id, user_id)
+      UNIQUE (reply_id, user_id)
     )`,
     `CREATE TABLE IF NOT EXISTS images (
-      imageid INT PRIMARY KEY AUTO_INCREMENT,
+      imageid SERIAL PRIMARY KEY,
       userid INT NOT NULL,
       filename VARCHAR(255) NOT NULL,
       originalname VARCHAR(255) NOT NULL,
@@ -79,10 +120,10 @@ async function initSchema() {
       FOREIGN KEY (userid) REFERENCES users(userid) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS notifications (
-      notification_id INT PRIMARY KEY AUTO_INCREMENT,
+      notification_id SERIAL PRIMARY KEY,
       user_id INT NOT NULL,
       sender_id INT,
-      type ENUM('answer', 'comment', 'upvote', 'mention', 'system') NOT NULL,
+      type VARCHAR(20) NOT NULL CHECK (type IN ('answer','comment','upvote','mention','system')),
       content TEXT NOT NULL,
       reference_id VARCHAR(36),
       is_read BOOLEAN DEFAULT FALSE,
@@ -102,11 +143,15 @@ async function initSchema() {
   }
 }
 
-// Kick off schema initialization (fire & forget with logging)
-initSchema().then(() => {
-  console.log('Database schema ensured');
-}).catch(err => {
-  console.error('Database schema initialization failed:', err.message);
-});
+// Kick off schema initialization only when connection is configured
+if (hasConnection) {
+  initSchema()
+    .then(() => {
+      console.log('Database schema ensured');
+    })
+    .catch((err) => {
+      console.error('Database schema initialization failed:', err.message);
+    });
+}
 
 module.exports = db;

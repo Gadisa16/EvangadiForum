@@ -13,8 +13,8 @@ async function postReply(req, res) {
     }
 
     try {
-        const [result] = await dbconnection.query(
-            "INSERT INTO replies(userid, answerid, reply_text) VALUES(?,?,?)",
+        const [insertRows] = await dbconnection.query(
+            "INSERT INTO replies(userid, answerid, reply_text) VALUES(?,?,?) RETURNING replyid",
             [userid, answerid, reply]
         );
 
@@ -32,7 +32,7 @@ async function postReply(req, res) {
             FROM replies r
             INNER JOIN users u ON r.userid = u.userid
             WHERE r.replyid = ?`,
-            [result.insertId]
+            [insertRows[0].replyid]
         );
 
         // Fetch answer owner

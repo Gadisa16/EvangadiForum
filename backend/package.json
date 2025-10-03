@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "build": "npm i",
+    "build": "npm ci || npm i",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -18,7 +18,8 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
-    "mysql2": "^3.10.1",
+    "pg": "^8.13.1",
+    "@supabase/supabase-js": "^2.45.1",
     "socket.io": "^4.8.1"
   }
 }
