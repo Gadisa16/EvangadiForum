@@ -124,14 +124,21 @@ app.use('/', uploadRoutes);
 // const port = 3333;
 const port = process.env.PORT || 3000;
 async function start(){
-    try {
-        const result = await dbConnection.execute("select 'test'")
-        await server.listen(port)
-        console.log("database connection established")
-        console.log(`listening on ${port}`)
-    } catch (error) {
-        console.log(error.message)
+  try {
+    // Wait for DB to be ready (with internal retries)
+  if (dbConnection && Object.hasOwn(dbConnection, 'ready')) {
+      await dbConnection.ready;
+      console.log('database connection established');
+    } else {
+      console.warn('Database connection not configured. Server will still start, but most routes will fail.');
     }
+  } catch (error) {
+    console.error('Database readiness failed:', error.message);
+    // Proceed to start server anyway to allow health checks and error surfaces
+  }
+
+  server.listen(port);
+  console.log(`listening on ${port}`);
 }
 start()
 

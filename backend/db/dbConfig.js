@@ -9,12 +9,23 @@ if (!hasConnection) {
 }
 
 // Create a Postgres pool only when we have a connection string.
+// Add keepAlive and sane timeouts to reduce read ECONNRESET on some hosts.
 const pool = hasConnection
   ? new Pool({
       connectionString,
-      ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false }
+      ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false },
+      keepAlive: true,
+      idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 30000),
+      connectionTimeoutMillis: Number(process.env.PG_CONNECTION_TIMEOUT_MS || 10000),
     })
   : null;
+
+// Surface unexpected pool errors (helps diagnose resets)
+if (pool) {
+  pool.on('error', (err) => {
+    console.error('Postgres pool error:', err.message);
+  });
+}
 
 // Convert MySQL-style '?' placeholders to Postgres-style $1, $2, ...
 function mapPlaceholders(sql) {
@@ -143,15 +154,36 @@ async function initSchema() {
   }
 }
 
-// Kick off schema initialization only when connection is configured
-if (hasConnection) {
-  initSchema()
-    .then(() => {
+// Expose a readiness promise with retries so the app can await DB+schema safely
+async function wait(ms) { return new Promise((res) => setTimeout(res, ms)); }
+
+async function ensureReadyWithRetry(maxAttempts = Number(process.env.DB_MAX_RETRIES || 5)) {
+  if (!hasConnection) throw new Error('DATABASE_URL is not set');
+
+  let attempt = 0;
+  let lastErr;
+  while (attempt < maxAttempts) {
+    attempt++;
+    try {
+      await db.execute('select 1');
+      await initSchema();
       console.log('Database schema ensured');
-    })
-    .catch((err) => {
-      console.error('Database schema initialization failed:', err.message);
-    });
+      return; // ready
+    } catch (err) {
+      lastErr = err;
+      const backoff = Math.min(2000 * attempt, 8000);
+      console.warn(`DB not ready (attempt ${attempt}/${maxAttempts}): ${err.message}. Retrying in ${backoff}ms...`);
+      await wait(backoff);
+    }
+  }
+  console.error('Database schema initialization failed:', lastErr?.message || lastErr);
+  throw lastErr;
 }
 
-module.exports = db;
+const ready = hasConnection ? ensureReadyWithRetry() : Promise.resolve();
+
+module.exports = {
+  ...db,
+  pool,
+  ready,
+};
