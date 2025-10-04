@@ -161,7 +161,7 @@ async function updateProfile(req, res) {
 async function getProfile(req, res) {
     try {
         const [users] = await dbConnection.query(
-            "SELECT userid, username, email, firstname, lastname, profilePicture, bio FROM users WHERE userid = ?",
+            "SELECT userid, username, email, firstname, lastname, profilepicture, bio FROM users WHERE userid = ?",
             [req.user.userid]
         );
 
@@ -176,7 +176,7 @@ async function getProfile(req, res) {
             email: user.email,
             firstname: user.firstname,
             lastname: user.lastname,
-            profilePicture: user.profilePicture,
+            profilePicture: user.profilepicture,
             bio: user.bio
         });
     } catch (error) {

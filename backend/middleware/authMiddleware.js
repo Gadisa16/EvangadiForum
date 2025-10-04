@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken")
 
 function authMiddleware(req,res,next){
     const authHeader=req.headers.authorization
-    console.log(authHeader)
+    // console.log(authHeader)
     if(!authHeader ||!authHeader.startsWith("Bearer")){
         return res.status(StatusCodes.UNAUTHORIZED).json({msg:" bearer invalid authentication",})
     }
@@ -14,7 +14,6 @@ function authMiddleware(req,res,next){
         req.user={username,userid}
         next()
     } catch (error) {
-        
             return res
             .status(StatusCodes.UNAUTHORIZED)
             .json({ msg: " auth invalid authentication" });

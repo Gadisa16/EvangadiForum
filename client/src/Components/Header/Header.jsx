@@ -55,6 +55,7 @@ function Header() {
     const fetchProfile = async () => {
       try {
         const response = await axios.get("/users/profile");
+        console.log("in header", response.data.profilePicture);
         setProfilePicture(response.data.profilePicture);
       } catch (error) {
         console.error("Failed to fetch profile:", error);

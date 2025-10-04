@@ -66,6 +66,7 @@ function HomePage() {
       const response = await axios.get("/questions/all_questions");
       console.log(response.data);
       if (response.data && Array.isArray(response.data.data)) {
+        console.log("questions response data", response.data.data);
         setQuestions(response.data.data);
       } else {
         setQuestions([]);
@@ -170,51 +171,61 @@ function HomePage() {
         </div>
         <h3 className="ns">Questions</h3>
       </div>
-      {loading ? (
-        <div className="empty-state-container">
-          <div className="empty-state-icon">
-            <i className="fas fa-spinner fa-spin"></i>
-          </div>
-          <p className="empty-state-text">Loading questions...</p>
-        </div>
-      ) : error ? (
-        <div className="empty-state-container">
-          <div className="empty-state-icon" style={{ animation: 'none' }}>
-            <i className="fas fa-exclamation-triangle text-danger"></i>
-          </div>
-          <p className="empty-state-text error">{error}</p>
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="empty-state-container">
-          <div className="empty-state-icon">
-            <i className="fas fa-eye"></i>
-          </div>
-          <p className="empty-state-text">No questions available at the moment.</p>
-          <button className="empty-state-text qba" onClick={handleAskQuestion}><span>Be the first to ask!</span></button>
-        </div>
-      ) : (
-        <AnimatePresence>
-          {questions.map((question, index) => (
-            <motion.div
-              key={question.questionid || index}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ delay: index * 0.08, duration: 0.5, type: "spring" }}
-            >
-              <Question
-                username={capitalizeName(question.username)}
-                profilePicture={question.profilePicture}
-                bio = {question.bio}
-                title={question.title}
-                questionid={question.questionid}
-                isAuthenticated={isAuthenticated}
-                created_at={question.created_at}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      )}
+      {(() => {
+        if (loading) {
+          return (
+            <div className="empty-state-container">
+              <div className="empty-state-icon">
+                <i className="fas fa-spinner fa-spin"></i>
+              </div>
+              <p className="empty-state-text">Loading questions...</p>
+            </div>
+          );
+        } else if (error) {
+          return (
+            <div className="empty-state-container">
+              <div className="empty-state-icon" style={{ animation: 'none' }}>
+                <i className="fas fa-exclamation-triangle text-danger"></i>
+              </div>
+              <p className="empty-state-text error">{error}</p>
+            </div>
+          );
+        } else if (questions.length === 0) {
+          return (
+            <div className="empty-state-container">
+              <div className="empty-state-icon">
+                <i className="fas fa-eye"></i>
+              </div>
+              <p className="empty-state-text">No questions available at the moment.</p>
+              <button className="empty-state-text qba" onClick={handleAskQuestion}><span>Be the first to ask!</span></button>
+            </div>
+          );
+        } else {
+          return (
+            <AnimatePresence>
+              {questions.map((question, index) => (
+                <motion.div
+                  key={question.questionid || index}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 40 }}
+                  transition={{ delay: index * 0.08, duration: 0.5, type: "spring" }}
+                >
+                  <Question
+                    username={capitalizeName(question.username)}
+                    profilePicture={question.profilepicture}
+                    bio = {question.bio}
+                    title={question.title}
+                    questionid={question.questionid}
+                    isAuthenticated={isAuthenticated}
+                    created_at={question.created_at}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          );
+        }
+      })()}
     </div>
   );
 }

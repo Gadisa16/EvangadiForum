@@ -17,6 +17,7 @@ const Profile = () => {
   });
   const [previewUrl, setPreviewUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   // const [error, setError] = useState(null);
   // const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
@@ -29,7 +30,8 @@ const Profile = () => {
     try {
       const response = await axios.get("/users/profile");
       const userData = response.data;
-      
+      console.log("user data", userData);
+      console.log("profile picture", userData.profilePicture);
       // Set profile data with existing values or empty strings
       setProfile({
         username: userData.username || "",
@@ -94,6 +96,7 @@ const Profile = () => {
     e.preventDefault();
     // setError(null);
     // setSuccess(null);
+    setUpdating(true);
 
     try {
       const formData = new FormData();
@@ -117,9 +120,11 @@ const Profile = () => {
       if (response.data.user.profilePicture) {
         setPreviewUrl(response.data.user.profilePicture);
       }
+      setUpdating(false);
     } catch (err) {
       // setError(err.response?.data?.msg || "Failed to update profile");
       toast.error(err.response?.data?.msg || "Failed to update profile");
+      setUpdating(false);
     }
   };
 
@@ -208,7 +213,7 @@ const Profile = () => {
           />
         </div>
         <button type="submit" className="update-button">
-          Update Profile
+          {updating ? <i className="fas fa-spinner fa-spin"></i> : 'Update Profile'}
         </button>
       </form>
     </div>
