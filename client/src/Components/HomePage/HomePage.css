@@ -67,7 +67,7 @@
 }
 
 @keyframes rotate {
-    form {
+    from {
         transform: translate(-50%, -50%) scale(1.4) rotate(0turn);
     }
     to {
