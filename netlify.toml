@@ -1,0 +1,10 @@
+[build]
+  base = "client"
+  publish = "client/dist"
+  command = "npm run build"
+
+# Ensure SPA routes work on refresh and deep links
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

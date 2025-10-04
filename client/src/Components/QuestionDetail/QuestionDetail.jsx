@@ -1,18 +1,18 @@
 import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
 import 'quill-emoji/dist/quill-emoji.css';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from "react-hook-form";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { QuestionContext } from '../../Context/QuestionContext';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../../axios";
+import BackButton from '../BackButton/BackButton';
 import "./QuestionDetail.css";
 import Reply from './Reply';
-import { toast } from 'react-toastify';
-import BackButton from '../BackButton/BackButton';
 
 
 // Import Quill modules
@@ -110,10 +110,8 @@ function QuestionDetail() {
                 if (response.data && response.data.url) {
                   const quill = this.quill;
                   const range = quill.getSelection(true);
-                  // Get the base URL without the /api suffix
-                  const baseUrl = axios.defaults.baseURL.replace('/api', '');
-                  const fullImageUrl = `${baseUrl}${response.data.url}`;
-                  quill.insertEmbed(range.index, 'image', fullImageUrl);
+                  // Use the absolute public URL returned by the server
+                  quill.insertEmbed(range.index, 'image', response.data.url);
                   toast.success('Image uploaded successfully!');
                 } else {
                   console.error('Invalid response format:', response.data);

@@ -1,14 +1,14 @@
 import DOMPurify from 'dompurify';
-import React, { useContext, useMemo, useRef } from 'react';
+import { useContext, useMemo, useRef } from 'react';
 import { useForm } from "react-hook-form";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
 import { userProvider } from '../../Context/UserProvider';
 import axios from "../../axios";
-import "./AskQuestion.css";
-import { toast } from 'react-toastify';
 import BackButton from '../BackButton/BackButton';
+import "./AskQuestion.css";
 
 function AskQuestion() {
   const {
@@ -61,10 +61,8 @@ function AskQuestion() {
                 if (response.data && response.data.url) {
                   const quill = this.quill;
                   const range = quill.getSelection(true);
-                  // Get the base URL without the /api suffix
-                  const baseUrl = axios.defaults.baseURL.replace('/api', '');
-                  const fullImageUrl = `${baseUrl}${response.data.url}`;
-                  quill.insertEmbed(range.index, 'image', fullImageUrl);
+                  // response.data.url is already an absolute public URL from storage
+                  quill.insertEmbed(range.index, 'image', response.data.url);
                 } else {
                   console.error('Invalid response format:', response.data);
                 }
