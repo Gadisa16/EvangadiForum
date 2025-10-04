@@ -1,6 +1,6 @@
 [build]
   base = "client"
-  publish = "client/dist"
+  publish = "dist"
   command = "npm run build"
 
 # Ensure SPA routes work on refresh and deep links
