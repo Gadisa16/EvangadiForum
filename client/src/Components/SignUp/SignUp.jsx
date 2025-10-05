@@ -4,6 +4,7 @@ import axios from "../../axios.js";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 function SignUp({ toggleForm }) {
   const [errorResponse, setErrorResponse] = useState("");
@@ -11,6 +12,7 @@ function SignUp({ toggleForm }) {
   const [passwordVisible, setPasswordVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
+  const navigate = useNavigate(); 
 
   const {
     register,
@@ -38,11 +40,14 @@ function SignUp({ toggleForm }) {
         password: data.password,
         email: data.email,
       });
+      // toast.success("User registered successfully!");
+      // setSuccessResponse("User registered successfully!");
+      // reset();
+      // toggleForm();
 
-      toast.success("User registered successfully!");
-      setSuccessResponse("User registered successfully!");
-      reset();
-      toggleForm();
+        toast.success("Registered. Check your email for the code.");
+        reset();
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       console.log("registration",error);
       toast.error(error?.message || "Registration failed. Try again.");

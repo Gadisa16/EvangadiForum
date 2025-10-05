@@ -7,6 +7,7 @@ const multer = require('multer');
 const { Server } = require('socket.io');
 const http = require('http');
 const app = express();
+const router = express.Router();
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -98,6 +99,7 @@ const questionRoute = require('./routes/questionRoutes');
 const answerRoute = require('./routes/answerRoutes');
 const replyRoute = require('./routes/replyRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const { verifyEmail, resendOtp } = require("./controller/verificationController");
 
 //json middleware to extract to json data
 app.use(express.json());
@@ -120,6 +122,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Include upload routes
 const uploadRoutes = require('./routes/uploadRoutes');
 app.use('/', uploadRoutes);
+
+router.post("/verify-email", verifyEmail);
+router.post("/resend-otp", resendOtp);
 
 // const port = 3333;
 const port = process.env.PORT || 3000;
@@ -155,3 +160,4 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+module.exports = router;

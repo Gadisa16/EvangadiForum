@@ -9,6 +9,7 @@ import HowItWorks from "./Components/HowItWorks/HowItWorks";
 import Landing from "./Components/Landing/Landing.jsx";
 import Profile from "./Components/Profile/Profile";
 import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
+import VerifyEmail from "./Components/VerifyEmail/VerifyEmail";
 import SignUp from "./Components/SignUp/SignUp";
 import { NotificationProvider } from './Context/NotificationContext';
 import PrivateRoute from "./Context/PrivateRoute.jsx";
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <Landing />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/question/:questionid"
           element={

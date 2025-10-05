@@ -71,6 +71,17 @@ async function initSchema() {
       bio TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+    `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE`,
+    `CREATE TABLE IF NOT EXISTS email_verifications (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL REFERENCES users(userid) ON DELETE CASCADE,
+      otp_hash VARCHAR(255) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      attempts INT NOT NULL DEFAULT 0,
+      consumed BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
     `CREATE TABLE IF NOT EXISTS questions (
       id SERIAL PRIMARY KEY,
       questionid VARCHAR(36) NOT NULL UNIQUE,

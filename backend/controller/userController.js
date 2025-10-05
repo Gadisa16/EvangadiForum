@@ -4,6 +4,7 @@ const { StatusCodes } = require('http-status-codes');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const { supabase } = require('../utils/supabaseClient');
+const { sendOtpAfterRegister } = require("./verificationController");
 
 async function register(req, res) {
     const { username, firstname, lastname, email, password } = req.body;
@@ -27,9 +28,19 @@ async function register(req, res) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        await dbConnection.query("INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)", [username, firstname, lastname, email, hashedPassword]);
+        // await dbConnection.query("INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)", [username, firstname, lastname, email, hashedPassword]);
 
-        return res.status(StatusCodes.CREATED).json({ msg: "user created" });
+        // return res.status(StatusCodes.CREATED).json({ msg: "user created" });
+
+        // Insert user and get new userid
+        const [insertResult] = await dbConnection.query(
+            "INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?) RETURNING userid",
+            [username, firstname, lastname, email, hashedPassword]
+        );
+        const newUserId = insertResult[0]?.userid;
+        // Send OTP after registration
+        await sendOtpAfterRegister(newUserId, email);
+        return res.status(StatusCodes.CREATED).json({ msg: "Registered. OTP sent to email." });
 
     } catch (error) {
         console.error(error.message);
@@ -56,6 +67,11 @@ async function login(req, res) {
         const isMatch = await bcrypt.compare(password, user[0].password);
         if (!isMatch) {
             return res.status(StatusCodes.BAD_REQUEST).json({ msg: "invalid credential" });
+        }
+
+        // Block login if not verified
+        if (!user[0].is_verified) {
+            return res.status(StatusCodes.FORBIDDEN).json({ msg: "Please verify your email to continue." });
         }
 
         const username = user[0].username;

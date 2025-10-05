@@ -97,7 +97,7 @@ function HomePage() {
     }
   }, [isAuthenticated]);
 
-  const greeting = ["Welcome back", "Hey", "Hy", "greetings", "Hello", "Hi", "Good to see you"];
+  const greeting = ["Welcome", "Hey", "Hy", "greetings", "Hello", "Hi", "Good to see you"];
   function getGreeting() {
     const randomGreeting = greeting[Math.floor(Math.random() * greeting.length)];
     return randomGreeting;
