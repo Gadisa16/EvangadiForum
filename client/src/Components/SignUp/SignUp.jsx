@@ -6,8 +6,8 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function SignUp({ toggleForm }) {
-  const [errorResponse, setError] = useState("");
-  const [successResponse, setSuccess] = useState("");
+  const [errorResponse, setErrorResponse] = useState("");
+  const [successResponse, setSuccessResponse] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
@@ -22,13 +22,13 @@ function SignUp({ toggleForm }) {
 
   async function onSubmit(data) {
     if (!isAgreed) {
-      setError("You must agree to the privacy policy and terms of service.");
+      setErrorResponse("You must agree to the privacy policy and terms of service.");
       return;
     }
 
     setIsLoading(true);
-    setError("");
-    setSuccess("");
+    setErrorResponse("");
+    setSuccessResponse("");
 
     try {
       await axios.post("/users/register", {
@@ -40,13 +40,13 @@ function SignUp({ toggleForm }) {
       });
 
       toast.success("User registered successfully!");
-      setSuccess("User registered successfully!");
+      setSuccessResponse("User registered successfully!");
       reset();
       toggleForm();
     } catch (error) {
       console.log("registration",error);
       toast.error(error?.message || "Registration failed. Try again.");
-      setError(error?.response?.data?.msg || "Registration failed. Try again.");
+      setErrorResponse(error?.response?.data?.msg || "Registration failed. Try again.");
     } finally {
       setIsLoading(false);
     }
