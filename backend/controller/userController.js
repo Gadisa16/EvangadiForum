@@ -32,12 +32,14 @@ async function register(req, res) {
 
         // return res.status(StatusCodes.CREATED).json({ msg: "user created" });
 
-        // Insert user and get new userid
-        const [insertResult] = await dbConnection.query(
-            "INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?) RETURNING userid",
+        // Insert user
+        await dbConnection.query(
+            "INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)",
             [username, firstname, lastname, email, hashedPassword]
         );
-        const newUserId = insertResult[0]?.userid;
+        // Get new userid by email
+        const [userRow] = await dbConnection.query("SELECT userid FROM users WHERE email = ?", [email]);
+        const newUserId = userRow[0]?.userid;
         // Send OTP after registration
         await sendOtpAfterRegister(newUserId, email);
         return res.status(StatusCodes.CREATED).json({ msg: "Registered. OTP sent to email." });
@@ -56,7 +58,7 @@ async function login(req, res) {
     }
 
     try {
-        const [user] = await dbConnection.query("SELECT username, userid, password FROM users WHERE email = ?", [email]);
+        const [user] = await dbConnection.query("SELECT username, userid, password, is_verified FROM users WHERE email = ?", [email]);
         console.log("user received in backend",user);
         // Check if the credentials are valid
         if (user.length === 0) {
