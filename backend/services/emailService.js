@@ -11,6 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendOtpEmail(to, code) {
+  console.log("to, code", to, code);
   const mins = Number(process.env.OTP_EXP_MINUTES || 2);
   const mailOptions = {
     from: process.env.EMAIL_FROM || "no-reply@example.com",

@@ -7,6 +7,7 @@ const { supabase } = require('../utils/supabaseClient');
 const { sendOtpAfterRegister } = require("./verificationController");
 
 async function register(req, res) {
+    console.log("here!")
     const { username, firstname, lastname, email, password } = req.body;
 
     if (!username || !firstname || !lastname || !email || !password) {
@@ -15,8 +16,9 @@ async function register(req, res) {
 
     try {
         const [user] = await dbConnection.query("SELECT username, userid FROM users WHERE username = ? OR email = ?", [username, email]);
-
+        console.log("user in try block1: ", user)
         if (user.length > 0) {
+            console.log("user already registered2");
             return res.status(StatusCodes.BAD_REQUEST).json({ msg: "user already registered" });
         }
 
@@ -32,17 +34,25 @@ async function register(req, res) {
 
         // return res.status(StatusCodes.CREATED).json({ msg: "user created" });
 
-        // Insert user
         await dbConnection.query(
             "INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)",
             [username, firstname, lastname, email, hashedPassword]
         );
-        // Get new userid by email
         const [userRow] = await dbConnection.query("SELECT userid FROM users WHERE email = ?", [email]);
         const newUserId = userRow[0]?.userid;
-        // Send OTP after registration
-        await sendOtpAfterRegister(newUserId, email);
-        return res.status(StatusCodes.CREATED).json({ msg: "Registered. OTP sent to email." });
+
+        let otpEmailSent = true;
+        try {
+            await sendOtpAfterRegister(newUserId, email);
+        } catch (e) {
+            otpEmailSent = false;
+            console.error("Failed to send OTP email:", e.message);
+        }
+
+        return res
+          .status(StatusCodes.CREATED)
+          .json({ msg: otpEmailSent ? "Registered. OTP sent to email." : "Registered. Could not email OTP. Use 'Resend code'.", otpEmailSent });
+
 
     } catch (error) {
         console.error(error.message);

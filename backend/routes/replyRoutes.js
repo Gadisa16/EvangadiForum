@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { postReply, getReplies, handleReplyVote, updateReply } = require("../controller/replyController");
+const { postReply, getReplies, handleReplyVote, updateReply } = require("../controllers/replyController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Post a reply

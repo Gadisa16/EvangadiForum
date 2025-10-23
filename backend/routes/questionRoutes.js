@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { postQuestion, allQuestions, getQuestionById, updateQuestion } = require("../controller/questionController.js");
+const { postQuestion, allQuestions, getQuestionById, updateQuestion } = require("../controllers/questionController.js");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Public routes

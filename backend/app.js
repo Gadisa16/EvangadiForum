@@ -99,7 +99,8 @@ const questionRoute = require('./routes/questionRoutes');
 const answerRoute = require('./routes/answerRoutes');
 const replyRoute = require('./routes/replyRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const { verifyEmail, resendOtp } = require("./controller/verificationController");
+// const { verifyEmail, resendOtp } = require("./controllers/verificationController");
+const emailRoute = require('./routes/emailRoutes');
 
 //json middleware to extract to json data
 app.use(express.json());
@@ -123,8 +124,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const uploadRoutes = require('./routes/uploadRoutes');
 app.use('/', uploadRoutes);
 
-router.post("/verify-email", verifyEmail);
-router.post("/resend-otp", resendOtp);
+app.use('/api/email', emailRoute);
+// router.post("/api/otp", verifyEmail);
+// router.post("/api/users/resend-otp", resendOtp);
 
 // const port = 3333;
 const port = process.env.PORT || 3000;

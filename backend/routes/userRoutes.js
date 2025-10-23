@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 
 //user controller
-const { register, login, check, updateProfile, getProfile, getUserStats } = require('../controller/userController');
+const { register, login, check, updateProfile, getProfile, getUserStats } = require('../controllers/userController');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();

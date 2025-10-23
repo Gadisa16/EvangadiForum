@@ -49,8 +49,8 @@ function SignUp({ toggleForm }) {
         reset();
         navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
-      console.log("registration",error);
-      toast.error(error?.message || "Registration failed. Try again.");
+      console.log("registration", error);
+      toast.error(error?.response?.data?.msg || "Registration failed. Try again.");
       setErrorResponse(error?.response?.data?.msg || "Registration failed. Try again.");
     } finally {
       setIsLoading(false);

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "../../axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import BackButton from "../BackButton/BackButton";
+import "./VerifyEmail.css";
 
 export default function VerifyEmail() {
   const [params] = useSearchParams();
@@ -14,7 +16,7 @@ export default function VerifyEmail() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("/users/verify-email", { email, otp });
+      await axios.post("/email/verify-email", { email, otp });
       toast.success("Email verified. You can sign in now.");
       navigate("/");
     } catch (e) {
@@ -26,7 +28,7 @@ export default function VerifyEmail() {
 
   const resend = async () => {
     try {
-      await axios.post("/users/resend-otp", { email });
+      await axios.post("/email/resend-otp", { email });
       toast.success("OTP sent");
     } catch (e) {
       toast.error(e?.response?.data?.msg || "Could not send OTP");
@@ -34,8 +36,11 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: 420 }}>
-      <h4>Verify your email</h4>
+    <div className="container" style={{ maxWidth: 520 }}>
+      <div className="d-flex mt-4 align-items-center mb-3">
+        <BackButton />
+        <h4>Verify your email</h4>
+      </div>
       <p>Code sent to: {email}</p>
       <form onSubmit={submit}>
         <input
@@ -52,7 +57,7 @@ export default function VerifyEmail() {
           {loading ? "Verifying..." : "Verify"}
         </button>
       </form>
-      <button className="btn btn-link mt-2" onClick={resend}>Resend code</button>
+      <button className="btn-link border-0 mt-2" onClick={resend}>Resend code</button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { upload, uploadImage } = require('../controller/uploadController');
+const { upload, uploadImage } = require('../controllers/uploadController');
 const { verifyToken } = require('../middleware/auth');
 
 // Route for image upload

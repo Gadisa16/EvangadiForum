@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const {postAnswer, getAnswer, updateAnswer}= require('../controller/answerController')
-const {voteAnswer, getVotes} = require('../controller/voteController')
+const {postAnswer, getAnswer, updateAnswer}= require('../controllers/answerController')
+const {voteAnswer, getVotes} = require('../controllers/voteController')
 const authMiddleware = require('../middleware/authMiddleware')
 
 // Public routes
