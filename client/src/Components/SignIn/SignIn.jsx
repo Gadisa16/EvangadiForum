@@ -1,9 +1,10 @@
 import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { userProvider } from "../../Context/UserProvider";
 import "./SignIn.css";
 import { toast } from "react-toastify";
+import axios from "../../axios"; // <-- added
 
 function SignIn({ toggleForm }) {
   const {
@@ -13,6 +14,7 @@ function SignIn({ toggleForm }) {
     formState: { errors },
   } = useForm();
 
+  const navigate = useNavigate();
   const { login } = useContext(userProvider);
   const [passwordVisible, setPasswordVisible] = useState(true);
   const [error, setError] = useState("");
@@ -32,6 +34,24 @@ function SignIn({ toggleForm }) {
     });
 
     if (!result.success) {
+      const msg = (result?.error || "").toString();
+      const requiresVerification =
+        result?.requiresVerification ||
+        result?.status === 403 ||
+        /verify/i.test(msg);
+
+      if (requiresVerification) {
+        try {
+          await axios.post("/email/resend-otp", { email: data.email });
+        } catch {
+          // ignore resend error; user can try again on verify page
+        }
+        toast.info("We emailed you a 6-digit code.");
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}&auto=1`);
+        setIsLoading(false);
+        return;
+      }
+
       toast.error(result.error || "Login failed. Try again.");
       setError(result.error);
     }

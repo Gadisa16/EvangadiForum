@@ -7,6 +7,7 @@ const multer = require('multer');
 const { Server } = require('socket.io');
 const http = require('http');
 const app = express();
+const { verifyTransport } = require('./services/emailService');
 const router = express.Router();
 
 // Create HTTP server
@@ -138,6 +139,18 @@ async function start(){
       console.log('database connection established');
     } else {
       console.warn('Database connection not configured. Server will still start, but most routes will fail.');
+    }
+
+    // Verify email transport once at startup (non-fatal)
+    try {
+      const info = await verifyTransport();
+      console.log('Email transport OK:', info.host + ':' + info.port, 'secure=' + info.secure);
+    } catch (e) {
+      console.warn(
+        'Email transport verify failed:',
+        e.message,
+        `host=${process.env.EMAIL_HOST} port=${process.env.EMAIL_PORT || 587} user=${process.env.EMAIL_USER}`
+      );
     }
   } catch (error) {
     console.error('Database readiness failed:', error.message);

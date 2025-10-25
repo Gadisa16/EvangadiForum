@@ -61,7 +61,7 @@ async function verifyEmail(req, res) {
 
 async function resendOtp(req, res) {
   try {
-    const { email } = req.body;
+    const email = req.body?.email || req.query?.email; // accept body or query
     if (!email) return res.status(400).json({ success: false, msg: "Email is required" });
 
     const [users] = await db.query("SELECT userid, is_verified FROM users WHERE email = ?", [email]);
