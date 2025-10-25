@@ -19,6 +19,12 @@ const transporter = nodemailer.createTransport({
   },
   logger: String(process.env.EMAIL_DEBUG || "").toLowerCase() === "true",
   debug: String(process.env.EMAIL_DEBUG || "").toLowerCase() === "true",
+  // Opt-in TLS relax setting for dev networks with SSL inspection; DO NOT use in prod
+  tls: {
+    // Default true (verify), can set EMAIL_TLS_REJECT_UNAUTHORIZED=false to bypass
+    rejectUnauthorized: String(process.env.EMAIL_TLS_REJECT_UNAUTHORIZED || 'true').toLowerCase() !== 'false',
+    minVersion: 'TLSv1.2',
+  },
 });
 
 // Optional: verify transporter at module load in dev

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import axios from "../../axios";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "../../axios";
 import BackButton from "../BackButton/BackButton";
 import "./VerifyEmail.css";
 
@@ -45,7 +45,7 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: 520 }}>
+    <div className="verify-email-page container" style={{ maxWidth: 520 }}>
       <div className="d-flex mt-4 align-items-center mb-3">
         <BackButton />
         <h4>Verify your email</h4>
