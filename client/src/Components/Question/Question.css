@@ -13,3 +13,23 @@
 .user {
     margin-bottom: 5px;
 }
+
+@media (max-width: 768px) {
+    .profile_username {
+        flex-direction: row !important;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .top_question {
+        position: relative;
+        padding: 6px 0;
+    }
+
+    .right_arrow {
+        position: absolute;
+        width: 100%;
+        left: 80%;
+        top: 30%;
+    }
+}

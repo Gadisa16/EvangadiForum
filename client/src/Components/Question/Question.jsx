@@ -32,7 +32,7 @@ function Question({ title, username, profilePicture, bio, questionid, isAuthenti
 
   return (
     <div className="border-top row top_question" onClick={handleClick}>
-      <div className="col-md-1 d-flex flex-column align-items-md-center my-md-auto">
+      <div className="col-md-1 d-flex flex-column align-items-md-center my-md-auto profile_username">
         {profilePicture ? (
           <span data-tooltip-id={`bio-tooltip-${questionid}`} data-tooltip-content={bio || 'No bio available'}>
             <ProfilePicture profilePicture={profilePicture} size="medium" />
@@ -51,7 +51,7 @@ function Question({ title, username, profilePicture, bio, questionid, isAuthenti
           <small className="text-muted posted_date">Posted on {formatDate(created_at)}</small>
         )}
       </div>
-      <div className="col-md text-md-end my-md-auto">
+      <div className="col-md text-md-end my-md-auto right_arrow">
         <i className="fas fa-angle-right fa-lg" />
       </div>
     </div>

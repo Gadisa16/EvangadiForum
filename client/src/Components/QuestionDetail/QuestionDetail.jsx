@@ -693,7 +693,7 @@ function QuestionDetail() {
                       trigger("answer");
                     }}
                     placeholder="Your answer..."
-                    className={`w-75 mx-auto ${errors.answer ? "invalid" : ""}`}
+                    className={`w-75 answer-text-area mx-auto ${errors.answer ? "invalid" : ""}`}
                     preserveWhitespace={true}
                   />
                 </div>

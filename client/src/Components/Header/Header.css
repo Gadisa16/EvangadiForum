@@ -185,11 +185,14 @@ button.dropdown-item {
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 1rem;
+        padding: 0 1rem;
+        padding-bottom: 4px;
     }
 
     .nav-links {
         gap: 1rem;
+        width: 100%;
+        justify-content: space-between;
     }
 
     .nav-brand a {
@@ -197,8 +200,8 @@ button.dropdown-item {
     }
 
     .profile-icon {
-        width: 35px;
-        height: 35px;
+        width: auto;
+        height: auto;
     }
 
     .dropdown-menu {

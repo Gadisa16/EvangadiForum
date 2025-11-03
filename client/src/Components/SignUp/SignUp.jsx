@@ -135,7 +135,7 @@ function SignUp({ toggleForm }) {
               trigger("password");
             }}
           />
-          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "5vw", top: "10px" }}>
+          <i onClick={togglePasswordVisibility} style={{ cursor: "pointer", position: "absolute", right: "5vw", top: "10px" }} className="eye-icon">
             {passwordVisible ? (
               <i className="fas fa-eye-slash" />
             ) : (

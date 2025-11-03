@@ -13,6 +13,12 @@
         color 0.3s;
 }
 
+@media (max-width: 678px) {
+    #back-button {
+        top: 0px;
+    }
+}
+
 #back-button:hover {
     /* background: linear-gradient(90deg, #e73c7e 0%, #23a6d5 100%); */
     /* color: #fff; */

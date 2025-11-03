@@ -53,6 +53,16 @@ textarea {
     padding: 2rem;
 }
 
+@media (max-width: 768px) {
+    .answer, .answer .card-body {
+        padding: 0;
+    }
+
+    .answer-text-area {
+        width: 95% !important;
+    }
+}
+
 .is-invalid {
     border: 1px solid #e01e5a !important;
     background: #fce9ef !important;
