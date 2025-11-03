@@ -33,5 +33,13 @@ router.post('/test', async (req, res) => {
 	}
 });
 
+	// Demo config endpoint: reveals bypass code only when enabled (for portfolio/demo)
+	router.get('/demo-config', (req, res) => {
+		const enabled = String(process.env.OTP_BYPASS_ENABLED || '').toLowerCase() === 'true';
+		const code = (process.env.OTP_BYPASS_CODE || '').trim();
+		if (!enabled) return res.json({ success: true, enabled: false });
+		return res.json({ success: true, enabled: true, code });
+	});
+
 
 module.exports = router;

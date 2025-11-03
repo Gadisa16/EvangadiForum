@@ -32,6 +32,25 @@ async function verifyEmail(req, res) {
     const user = users[0];
     if (user.is_verified) return res.json({ success: true, msg: "Already verified" });
 
+    // Demo/bypass mode: allow a fixed OTP via env, e.g., OTP_BYPASS_CODE=123456
+    const bypassEnabled = String(process.env.OTP_BYPASS_ENABLED || '').toLowerCase() === 'true';
+    const bypassCode = (process.env.OTP_BYPASS_CODE || '').trim();
+    if (bypassEnabled && bypassCode && otp === bypassCode) {
+      try {
+        await db.query("UPDATE users SET is_verified = TRUE WHERE userid = ?", [user.userid]);
+        // Best-effort: mark last verification as consumed if exists
+        await db.query(
+          "UPDATE email_verifications SET consumed = TRUE WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+          [user.userid]
+        );
+      } catch (e) {
+        // continue to return success even if cleanup fails
+        console.warn('Bypass verify cleanup failed:', e?.message);
+      }
+      return res.json({ success: true, msg: "Email verified (demo mode)" });
+    }
+  
+
     const [rows] = await db.query(
       "SELECT id, otp_hash, expires_at, consumed, attempts FROM email_verifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
       [user.userid]

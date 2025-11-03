@@ -11,6 +11,7 @@ export default function VerifyEmail() {
   const auto = params.get("auto") === "1";
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demo, setDemo] = useState({ enabled: false, code: "" });
   const navigate = useNavigate();
 
   const resend = async () => {
@@ -30,6 +31,18 @@ export default function VerifyEmail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, auto]);
 
+  useEffect(() => {
+    axios
+      .get("/email/demo-config")
+      .then((r) => {
+        const data = r?.data || {};
+        if (data.success && data.enabled) {
+          setDemo({ enabled: true, code: data.code || "" });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -46,6 +59,13 @@ export default function VerifyEmail() {
 
   return (
     <div className="verify-email-page container" style={{ maxWidth: 520 }}>
+      {demo.enabled && (
+        <div className="demo-banner">
+          <strong>Demo mode:</strong> This portfolio app accepts the fixed code
+          <span className="demo-code"> {demo.code || "123456"} </span>
+          to verify.
+        </div>
+      )}
       <div className="d-flex mt-4 align-items-center mb-3">
         <BackButton />
         <h4>Verify your email</h4>
