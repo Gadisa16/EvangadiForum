@@ -18,6 +18,7 @@ async function createOrReplaceOtp(userId, email) {
     [userId, hash, expiresAt]
   );
   await sendOtpEmail(email, code);
+  return { expiresAt };
 }
 
 async function verifyEmail(req, res) {
@@ -88,8 +89,8 @@ async function resendOtp(req, res) {
     const user = users[0];
     if (user.is_verified) return res.json({ success: true, msg: "Already verified" });
 
-    await createOrReplaceOtp(user.userid, email);
-    res.json({ success: true, msg: "OTP sent" });
+    const info = await createOrReplaceOtp(user.userid, email);
+    res.json({ success: true, msg: "OTP sent", expiresAt: info.expiresAt });
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false, msg: "Server error" });

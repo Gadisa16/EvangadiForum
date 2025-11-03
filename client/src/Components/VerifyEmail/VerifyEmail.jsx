@@ -12,12 +12,16 @@ export default function VerifyEmail() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [demo, setDemo] = useState({ enabled: false, code: "" });
+  const [expiresAt, setExpiresAt] = useState(null);
+  const [remaining, setRemaining] = useState(0); // in seconds
   const navigate = useNavigate();
 
   const resend = async () => {
     try {
-      await axios.post("/email/resend-otp", { email });
+      const r = await axios.post("/email/resend-otp", { email });
       toast.success("OTP sent");
+      const ts = r?.data?.expiresAt;
+      if (ts) setExpiresAt(ts);
     } catch (e) {
       console.log("resend-otp", e);
       toast.error(e?.response?.data?.msg || "Could not send OTP");
@@ -42,6 +46,18 @@ export default function VerifyEmail() {
       })
       .catch(() => {});
   }, []);
+
+  // countdown effect
+  useEffect(() => {
+    if (!expiresAt) return;
+    const tick = () => {
+      const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+      setRemaining(diff);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -71,6 +87,12 @@ export default function VerifyEmail() {
         <h4>Verify your email</h4>
       </div>
       <p>Code sent to: {email || "Unknown email"}</p>
+      {remaining > 0 && (
+        <div className="text-muted mb-2" style={{ fontSize: 14 }}>
+          Code expires in {Math.floor(remaining / 60)}:
+          {(remaining % 60).toString().padStart(2, "0")}
+        </div>
+      )}
       <form onSubmit={submit}>
         <input
           type="text"
@@ -86,7 +108,9 @@ export default function VerifyEmail() {
           {loading ? "Verifying..." : "Verify"}
         </button>
       </form>
-      <button className="btn-link border-0 mt-2" onClick={resend} disabled={!email}>Resend code</button>
+      <button className="btn-link border-0 mt-2" onClick={resend} disabled={!email || remaining > 0}>
+        {remaining > 0 ? `Resend available in ${remaining}s` : "Resend code"}
+      </button>
     </div>
   );
 }
