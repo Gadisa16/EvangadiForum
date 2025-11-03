@@ -1,5 +1,7 @@
 import { useContext } from "react";
-import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
 import AskQuestion from "./Components/AskQuestion/AskQuestion";
 import Footer from "./Components/Footer/Footer";
@@ -7,23 +9,22 @@ import Header from "./Components/Header/Header";
 import HomePage from "./Components/HomePage/HomePage";
 import HowItWorks from "./Components/HowItWorks/HowItWorks";
 import Landing from "./Components/Landing/Landing.jsx";
+import Loader from "./Components/Loader/Loader";
 import Profile from "./Components/Profile/Profile";
 import QuestionDetail from "./Components/QuestionDetail/QuestionDetail.jsx";
-import VerifyEmail from "./Components/VerifyEmail/VerifyEmail";
 import SignUp from "./Components/SignUp/SignUp";
+import VerifyEmail from "./Components/VerifyEmail/VerifyEmail";
 import { NotificationProvider } from './Context/NotificationContext';
 import PrivateRoute from "./Context/PrivateRoute.jsx";
 import { QuestionProvider } from "./Context/QuestionContext"; // Import QuestionProvider
 import { SocketProvider } from './Context/SocketContext';
 import { userProvider } from "./Context/UserProvider";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 function AppRoutes() {
   const { isAuthenticated, isLoading } = useContext(userProvider);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Loader message="Loading EvangadiForum…" />;
   }
 
   return (

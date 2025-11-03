@@ -1,0 +1,108 @@
+:root {
+  --ef-bg-start: #0b1020;
+  --ef-bg-end: #0e1327;
+  --ef-accent: #ff6b00; /* Evangadi orange */
+  --ef-accent-2: #ffd2b3;
+  --ef-text: #e2e8f0;
+  --ef-subtext: #94a3b8;
+}
+
+/* Light mode tweaks */
+@media (prefers-color-scheme: light) {
+  :root {
+    --ef-bg-start: #f8fafc;
+    --ef-bg-end: #eef2f7;
+    --ef-text: #0f172a;
+    --ef-subtext: #475569;
+  }
+}
+
+.ef-loader {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--ef-text);
+  background:
+    radial-gradient(1200px 800px at 20% 10%, color-mix(in oklab, var(--ef-accent) 12%, transparent), transparent 40%),
+    linear-gradient(180deg, var(--ef-bg-start) 0%, var(--ef-bg-end) 100%);
+}
+
+.ef-spinner {
+  position: relative;
+  width: 94px;
+  height: 94px;
+  filter: drop-shadow(0 4px 24px color-mix(in oklab, var(--ef-accent) 35%, transparent));
+}
+
+.ef-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: var(--ef-accent);
+  animation: ef-rotate 1.2s linear infinite;
+}
+
+.ef-ring.r2 {
+  inset: 6px;
+  border-top-color: color-mix(in oklab, var(--ef-accent) 70%, var(--ef-accent-2));
+  animation-duration: 1.6s;
+  animation-direction: reverse;
+}
+
+.ef-ring.r3 {
+  inset: 12px;
+  border-top-color: color-mix(in oklab, var(--ef-accent) 40%, var(--ef-accent-2));
+  animation-duration: 2s;
+}
+
+.ef-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  background: var(--ef-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--ef-accent) 40%, transparent);
+  animation: ef-pulse 2s ease-in-out infinite;
+}
+
+.ef-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ef-text .brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+.ef-text .message {
+  font-size: 0.95rem;
+  color: var(--ef-subtext);
+}
+
+@keyframes ef-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ef-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--ef-accent) 50%, transparent); }
+  70% { box-shadow: 0 0 0 16px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ef-ring, .ef-dot { animation: none; }
+}

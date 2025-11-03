@@ -5,6 +5,7 @@ import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import "./Profile.css";
 import { toast } from "react-toastify";
 import BackButton from "../BackButton/BackButton";
+import Loader from "../Loader/Loader";
 
 const Profile = () => {
   const [profile, setProfile] = useState({
@@ -133,7 +134,7 @@ const Profile = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <Loader message="Loading EvangadiForum…" />;
   }
 
   return (

@@ -1,13 +1,14 @@
 import React, { useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { userProvider } from "./UserProvider";
+import Loader from "../Components/Loader/Loader";
 
 function PrivateRoute({ children }) {
     const { isAuthenticated, isLoading } = useContext(userProvider);
     const location = useLocation();
 
     if (isLoading) {
-        return <div>Loading...</div>; // You can replace this with a proper loading component
+        return <Loader message="Loading EvangadiForum…" />; // You can replace this with a proper loading component
     }
 
     if (!isAuthenticated) {
