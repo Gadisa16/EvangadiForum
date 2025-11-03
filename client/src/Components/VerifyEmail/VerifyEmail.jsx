@@ -76,8 +76,11 @@ export default function VerifyEmail() {
   return (
     <div className="verify-email-page container" style={{ maxWidth: 520 }}>
       {demo.enabled && (
-        <div className="demo-banner">
-          <strong>Demo mode:</strong> This portfolio app accepts the fixed code
+        <div className="demo-banner" role="alert" aria-live="polite">
+          <strong>Demo mode:</strong> This is my portfolio demo. Because I don’t have a custom
+          email domain set up on production and free hosting can block SMTP, I use a
+          fixed verification code so you can try the app without email hurdles.
+          Use code
           <span className="demo-code"> {demo.code || "123456"} </span>
           to verify.
         </div>
