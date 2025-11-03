@@ -37,8 +37,10 @@ router.post('/test', async (req, res) => {
 	router.get('/demo-config', (req, res) => {
 		const enabled = String(process.env.OTP_BYPASS_ENABLED || '').toLowerCase() === 'true';
 		const code = (process.env.OTP_BYPASS_CODE || '').trim();
-		if (!enabled) return res.json({ success: true, enabled: false });
-		return res.json({ success: true, enabled: true, code });
+		const ttlMinutes = Number(process.env.OTP_EXP_MINUTES || 2);
+		const ttlSeconds = Math.max(0, Math.floor(ttlMinutes * 60));
+		if (!enabled) return res.json({ success: true, enabled: false, ttlSeconds });
+		return res.json({ success: true, enabled: true, code, ttlSeconds });
 	});
 
 

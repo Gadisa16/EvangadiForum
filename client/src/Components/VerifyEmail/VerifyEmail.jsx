@@ -42,6 +42,11 @@ export default function VerifyEmail() {
         const data = r?.data || {};
         if (data.success && data.enabled) {
           setDemo({ enabled: true, code: data.code || "" });
+          // If no server-provided expiresAt yet, synthesize one from ttlSeconds for demo UX
+          if (!expiresAt && data.ttlSeconds) {
+            const until = new Date(Date.now() + data.ttlSeconds * 1000).toISOString();
+            setExpiresAt(until);
+          }
         }
       })
       .catch(() => {});
